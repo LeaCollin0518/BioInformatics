@@ -1,8 +1,8 @@
 public class NeedlemanWunsch {
 	public static void main(String[] args){
 		//parameters
-		String s = "ACAT";
-		String t = "AGT";
+		String s = "";
+		String t = "";
 		int m = s.length() +1;
 		int n = t.length() +1;
 		int gap = -2;
@@ -76,25 +76,6 @@ public class NeedlemanWunsch {
 				}
 			}
 		}
-		
-		//printing out score and traceback matrices
-		/*for(int i=0; i<m; i++){
-			for(int j=0; j<n; j++){
-				System.out.print(score[i][j] + "\t");
-			}
-			System.out.println();
-		}
-		
-		System.out.println();
-		
-		for(int i=0; i<m; i++){
-			for(int j=0; j<n; j++){
-				System.out.print(traceback[i][j] + "\t");
-			}
-			System.out.println();
-		}*/
-		
-		System.out.println();
 		
 		//getting score of alignment
 		finalScore = score[m-1][n-1];
