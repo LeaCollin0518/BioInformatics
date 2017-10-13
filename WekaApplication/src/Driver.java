@@ -55,11 +55,15 @@ public class Driver {
 		
 		for(int i = 0;i<sum;i++){
 			
-			System.out.print("Instance: " + (i+1) + 
-					"		Actual: " + instancesTest.instance(i).classValue() + 
-					"	Predicted: " + m_classifier.classifyInstance(instancesTest.instance(i)));
+			double actual = instancesTest.instance(i).classValue() + 1;
+			double predicted = m_classifier.classifyInstance(instancesTest.instance(i)) + 1;
 			
-			if(m_classifier.classifyInstance(instancesTest.instance(i))==instancesTest.instance(i).classValue()) {// If the prediction of value and value are equal (classified in the testing corpus provides must be the correct answer, the results are meaningful)
+			System.out.print("Instance: " + (i+1) + 
+					"		Actual: " + actual + 
+					"	Predicted: " + predicted);
+			
+			
+			if(predicted == actual) {// If the prediction of value and value are equal (classified in the testing corpus provides must be the correct answer, the results are meaningful)
 		
 				correct++; //The correct value 1
 				System.out.println("		Correct");
