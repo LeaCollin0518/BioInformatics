@@ -6,7 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.IOException;
 import weka.classifiers.Classifier;
-import weka.classifiers.trees.J48;
+import weka.classifiers.AbstractClassifier;
 
 public class Driver {
 
@@ -32,7 +32,11 @@ public class Driver {
 		
 		String classAttribute = "Stage";
 		
-		Classifier m_classifier = new J48();
+		String classifierName = "J48";
+		
+		String [] options = null;
+		
+		Classifier m_classifier = AbstractClassifier.forName(classifierName, options);
 		
 		//reading the files and getting all the instances of each one
 		Instances instancesTrain = fileReader(trainingFile);
