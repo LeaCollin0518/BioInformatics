@@ -1,90 +1,100 @@
-import weka.core.Attribute;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.converters.ArffLoader;
-import weka.core.converters.ArffLoader.ArffReader;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.io.IOException;
 import weka.classifiers.Classifier;
 import weka.classifiers.trees.J48;
 
 public class Driver {
 
-	private static final Attribute Attribute = null;
-
 	public static Instances fileReader(String input) throws IOException {
 
-		BufferedReader reader = new BufferedReader(new FileReader(input));
-		ArffReader arff = new ArffReader(reader);
-		Instances data = arff.getData();
-		data.setClassIndex(data.numAttributes() - 1);
+		File inputFile = new File(input);
+		ArffLoader atf = new ArffLoader();
+		atf.setFile(inputFile);
+		Instances data = atf.getDataSet();
 		
 		return data;
 		
 	}
 	
 	public static void main(String [] args) throws Exception {
+		
+		//make these strings be taken in as program arguments
 		String trainingFile = "/home/leac/Documents/U4/Comp401/TrainingData.arff";
-		//Instances trainingData = fileReader(trainingFile);
 		
 		String testingFile = "/home/leac/Documents/U4/Comp401/TestingData.arff";
-		//Instances testingData = fileReader(testingFile);
+		
+		String outputFile = "/home/leac/Documents/U4/Comp401/output.csv";
+		
+		String classAttribute = "Stage";
 		
 		Classifier m_classifier = new J48();
 		
+		//reading the files and getting all the instances of each one
+		Instances instancesTrain = fileReader(trainingFile);
+		Instances instancesTest = fileReader(testingFile);
 		
-		File inputFile = new File(trainingFile);	//creating a new file (training file)
-		ArffLoader atf = new ArffLoader();	//creating a new ArffLoader
-		atf.setFile(inputFile);		//setting the file for the ArffLoader
-		Instances instancesTrain = atf.getDataSet(); 	//reading the entire dataset
-
-		//same thing as right above, with testing file
-		inputFile = new File(testingFile);
-		atf.setFile(inputFile);
-		Instances instancesTest = atf.getDataSet();
+		//set the Class (what we want to predict)
+		instancesTest.setClass(instancesTest.attribute(classAttribute)); 
 		
-		instancesTest.setClass(instancesTest.attribute("Stage")); //set the Class (what we want to predict) to be Stage
+		//setting the training class index to be the same as the testing class index
+		instancesTrain.setClassIndex(instancesTest.classIndex()); 
 		
-		instancesTrain.setClassIndex(instancesTest.classIndex()); //set the ClassIndex to be the classIndex (straightforward)
-		
-		double sum = instancesTest.numInstances(), correct = 0.0f;
-				
+		double numInst = instancesTest.numInstances(), correct = 0.0f;
+			
+		//building the model
 		m_classifier.buildClassifier(instancesTrain);
 		
-		for(int i = 0;i<sum;i++){
+		//writing the header to the output csv
+		File output = new File(outputFile);
+		PrintWriter pw = new PrintWriter(output);
+        StringBuilder sb = new StringBuilder();
+        sb.append("Instance");
+        sb.append(',');
+        sb.append("Actual");
+        sb.append(',');
+        sb.append("Predicted");
+        sb.append('\n');
+		
+		for(int i = 0;i < numInst; i++){
 			
 			Instance current = instancesTest.instance(i);
 			
 			Instance temp = (Instance)current.copy();
 			
+			//attributes are given as array positions, getting the string value
 			String actualVal = current.stringValue(instancesTest.classIndex());
 			
+			//getting the predicted value of the class attribute of this instance
 			double predicted = m_classifier.classifyInstance(instancesTest.instance(i));
 			
+			//setting this value to the temp class attribute
 			temp.setValue(instancesTest.classIndex(), predicted);
 			
+			//getting the string value
 			String predictedVal = temp.stringValue(temp.classIndex());
 			
+			sb.append((i+1));
+			sb.append(',');
+			sb.append(actualVal);
+			sb.append(',');
+			sb.append(predictedVal);
+			sb.append('\n');
 			
-			System.out.print("Instance: " + (i+1) + 
-					"		Actual: " + actualVal + 
-					"		Predicted: " + predictedVal);
 			
-			
-			if(predictedVal.equals(actualVal)) {// If the prediction of value and value are equal (classified in the testing corpus provides must be the correct answer, the results are meaningful)
+			if(predictedVal.equals(actualVal)) {
 		
-				correct++; //The correct value 1
-				System.out.println("		Correct");
-			}
-			else {
-				System.out.println("		Incorrect");
+				correct++;
 			}
 		}
 		
-		System.out.println();
-		System.out.println("J48 classification precision: " + (100*correct/sum) + "%");
+		sb.append('\n');
+        sb.append("J48 classification precision: " + (100*correct/numInst) + "%");
+		pw.write(sb.toString());
+        pw.close();
 	}
-	
 }
