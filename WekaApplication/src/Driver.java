@@ -51,8 +51,6 @@ public class Driver {
 		
 		double sum = instancesTest.numInstances(), correct = 0.0f;
 		
-		System.out.println(correct);
-		
 		m_classifier.buildClassifier(instancesTrain);
 		
 		for(int i = 0;i<sum;i++){
