@@ -1,6 +1,7 @@
 # eclipse files
 .classpath
 .project
+.settings
 
 # compiled java bytecode
 *.class
