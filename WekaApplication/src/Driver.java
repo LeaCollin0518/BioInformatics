@@ -9,6 +9,28 @@ import weka.classifiers.Classifier;
 import weka.classifiers.AbstractClassifier;
 
 public class Driver {
+	
+	public static void main(String [] args) throws Exception {
+		
+		//make these strings be taken in as program arguments
+		String trainingFile = args[0];
+		
+		String testingFile = args[1];
+		
+		String outputDir = args[2];
+		
+		//reading the files and getting all the instances of each one
+		Instances instancesTrain = fileReader(trainingFile);
+		Instances instancesTest = fileReader(testingFile);
+		
+		
+		String classAttribute = "Stage";
+		
+		String [] options = null;
+		
+		predict(instancesTrain, instancesTest, "J48", options, classAttribute, outputDir);
+		predict(instancesTrain, instancesTest, "ZeroR", options, classAttribute, outputDir);
+	}
 
 	public static Instances fileReader(String input) throws IOException {
 
@@ -22,7 +44,7 @@ public class Driver {
 	}
 	
 	public static void predict(Instances train, Instances test, String classifierName, 
-			String [] options, String classAttribute) throws Exception {
+			String [] options, String classAttribute, String outputDir) throws Exception {
 		
 		//set the Class (what we want to predict)
 		test.setClass(test.attribute(classAttribute));
@@ -37,7 +59,8 @@ public class Driver {
 		//building the model
 		m_classifier.buildClassifier(train);
 		
-		String outputFile = "/home/leac/Documents/U4/Comp401/" + classifierName + "Model.csv";
+		
+		String outputFile = outputDir + classifierName + "Model.csv";
 		
 		//writing the header to the output csv
 		File output = new File(outputFile);
@@ -86,26 +109,5 @@ public class Driver {
         sb.append(classifierName + " classification precision: " + (100*correct/numInst) + "%");
 		pw.write(sb.toString());
         pw.close();
-	}
-	
-	public static void main(String [] args) throws Exception {
-		
-		//make these strings be taken in as program arguments
-		String trainingFile = "/home/leac/Documents/U4/Comp401/TrainingData.arff";
-		
-		String testingFile = "/home/leac/Documents/U4/Comp401/TestingData.arff";
-		
-		String classAttribute = "Stage";
-		
-		String [] options = null;
-		
-		//reading the files and getting all the instances of each one
-		Instances instancesTrain = fileReader(trainingFile);
-		Instances instancesTest = fileReader(testingFile);
-		
-		predict(instancesTrain, instancesTest, "J48", options, classAttribute);
-		predict(instancesTrain, instancesTest, "ZeroR", options, classAttribute);
-		
-		
 	}
 }
