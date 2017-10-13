@@ -1,82 +1,74 @@
-import weka.core.Attribute;
-import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.converters.ArffLoader;
-import weka.core.converters.ArffLoader.ArffReader;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import weka.classifiers.Classifier;
 import weka.classifiers.trees.J48;
 
-public class Driver {
+public class Driver
+{
+	public static String PATH_TO_TRAINING_DATA = "/home/leac/Documents/U4/Comp401/TrainingData.arff";
+	public static String PATH_TO_TESTING_DATA = "/home/leac/Documents/U4/Comp401/TestingData.arff";
 
-	private static final Attribute Attribute = null;
+	public static void main(String[] args) throws Exception
+	{
+		// weka classifier, J48 classification algorithm
+		Classifier j48_classifier = new J48();
+		
+		// .arff file reader
+		ArffLoader arffLoader = new ArffLoader();
 
-	public static Instances fileReader(String input) throws IOException {
+		// load training data .arff file into weka objects
+		File inputFile = new File(PATH_TO_TRAINING_DATA);
+		arffLoader.setFile(inputFile);
+		Instances instancesTrain = arffLoader.getDataSet();
 
-		BufferedReader reader = new BufferedReader(new FileReader(input));
-		ArffReader arff = new ArffReader(reader);
-		Instances data = arff.getData();
-		data.setClassIndex(data.numAttributes() - 1);
 		
-		return data;
-		
-	}
-	
-	public static void main(String [] args) throws Exception {
-		String trainingFile = "/home/leac/Documents/U4/Comp401/TrainingData.arff";
-		//Instances trainingData = fileReader(trainingFile);
-		
-		String testingFile = "/home/leac/Documents/U4/Comp401/TestingData.arff";
-		//Instances testingData = fileReader(testingFile);
-		
-		Classifier m_classifier = new J48();
-		
-		
-		File inputFile = new File(trainingFile);	//creating a new file (training file)
-		ArffLoader atf = new ArffLoader();	//creating a new ArffLoader
-		atf.setFile(inputFile);		//setting the file for the ArffLoader
-		Instances instancesTrain = atf.getDataSet(); 	//reading the entire dataset
+		// load testing data .arff file into weka objects
+		inputFile = new File(PATH_TO_TESTING_DATA);
+		arffLoader.setFile(inputFile);
+		Instances instancesTest = arffLoader.getDataSet();
 
-		//same thing as right above, with testing file
-		inputFile = new File(testingFile);
-		atf.setFile(inputFile);
-		Instances instancesTest = atf.getDataSet();
-		
-		instancesTest.setClass(instancesTest.attribute("Stage")); //set the Class (what we want to predict) to be Stage
-		
-		//System.out.println(instancesTest.classAttribute());
+		// set class index and train classifier on training data
+		instancesTrain.setClassIndex(instancesTest.classIndex());
+		j48_classifier.buildClassifier(instancesTrain);
 
-		instancesTrain.setClassIndex(instancesTest.classIndex()); //Set the ClassIndex to be the classIndex (straightforward)
+		//set the Class (what we want to predict) to be Stage
+		instancesTest.setClass(instancesTest.attribute("Stage"));
 		
-		double sum = instancesTest.numInstances(), correct = 0.0f;
-		
-		m_classifier.buildClassifier(instancesTrain);
-		
-		for(int i = 0;i<sum;i++){
+		/**
+		 * TESTING THE ALGORITHM
+		 * 
+		 * Run the classifier on each row of the test data.
+		 * For each row: print the test data, the predicted classification, and the correct classification.
+		 */
+		double numInstances = instancesTest.numInstances(); // how many rows of input data to test
+		double correct = 0.0f;								// proportion of correct classifications
+		double predicted;									// predicted classification for a given row of input data
+		double actual;										// correct classification for a given row of input data
+
+		for( int i = 0; i < numInstances; i++ )
+		{
+			actual    = instancesTest.instance(i).classValue() + 1;
+			predicted = j48_classifier.classifyInstance(instancesTest.instance(i)) + 1;
 			
-			double actual = instancesTest.instance(i).classValue() + 1;
-			double predicted = m_classifier.classifyInstance(instancesTest.instance(i)) + 1;
+			System.out.print("Instance: "        + (i + 1) + 
+					       "\tActual: Stage "    + (int)(actual) +
+						   "\tPredicted: Stage " + (int)predicted);
 			
-			System.out.print("Instance: " + (i+1) + 
-					"		Actual: Stage " + (int)(actual) + 
-					"		Predicted: Stage " + (int)predicted);
-			
-			
-			if(predicted == actual) {// If the prediction of value and value are equal (classified in the testing corpus provides must be the correct answer, the results are meaningful)
-		
-				correct++; //The correct value 1
-				System.out.println("		Correct");
+			// if predicted correctly on current row of test data
+			if( predicted == actual )
+			{
+				correct++;
+				System.out.println("\tCorrect");
 			}
-			else {
-				System.out.println("		Incorrect");
+			else
+			{
+				System.out.println("\tIncorrect");
 			}
 		}
 		
-		System.out.println();
-		System.out.println("J48 classification precision: " + (100*correct/sum) + "%");
+		// so how did we do (in percent)?
+		System.out.println("\nJ48 classification precision: " + ((correct / numInstances) * 100) + "%");
 	}
 	
 }
