@@ -2,4 +2,4 @@
 
 Adapted Needleman-Wunsch Algorithm
 
-Weka Classifier Application
+Weka Machine Learning Classifier Application
