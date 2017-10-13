@@ -46,6 +46,8 @@ public class Driver {
 		Instances instancesTest = atf.getDataSet();
 		
 		instancesTest.setClass(instancesTest.attribute("Stage")); //set the Class (what we want to predict) to be Stage
+		
+		//System.out.println(instancesTest.classAttribute());
 
 		instancesTrain.setClassIndex(instancesTest.classIndex()); //Set the ClassIndex to be the classIndex (straightforward)
 		
@@ -59,8 +61,8 @@ public class Driver {
 			double predicted = m_classifier.classifyInstance(instancesTest.instance(i)) + 1;
 			
 			System.out.print("Instance: " + (i+1) + 
-					"		Actual: " + actual + 
-					"	Predicted: " + predicted);
+					"		Actual: Stage " + (int)(actual) + 
+					"		Predicted: Stage " + (int)predicted);
 			
 			
 			if(predicted == actual) {// If the prediction of value and value are equal (classified in the testing corpus provides must be the correct answer, the results are meaningful)
@@ -74,7 +76,7 @@ public class Driver {
 		}
 		
 		System.out.println();
-		System.out.println("J48 classification precision: " + (correct/sum));
+		System.out.println("J48 classification precision: " + (100*correct/sum) + "%");
 	}
 	
 }
