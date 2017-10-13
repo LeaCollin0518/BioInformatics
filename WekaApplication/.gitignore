@@ -1,0 +1,7 @@
+# eclipse files
+.classpath
+.project
+
+# compiled java bytecode
+*.class
+bin/
