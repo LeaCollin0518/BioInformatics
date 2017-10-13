@@ -21,37 +21,23 @@ public class Driver {
 		
 	}
 	
-	public static void main(String [] args) throws Exception {
+	public static void predict(Instances train, Instances test, String classifierName, 
+			String [] options, String classAttribute) throws Exception {
 		
-		//make these strings be taken in as program arguments
-		String trainingFile = "/home/leac/Documents/U4/Comp401/TrainingData.arff";
+		//set the Class (what we want to predict)
+		test.setClass(test.attribute(classAttribute));
 		
-		String testingFile = "/home/leac/Documents/U4/Comp401/TestingData.arff";
+		//setting the train class index to be the same as the testing class index
+		train.setClassIndex(test.classIndex());
 		
-		String outputFile = "/home/leac/Documents/U4/Comp401/output.csv";
-		
-		String classAttribute = "Stage";
-		
-		String classifierName = "J48";
-		
-		String [] options = null;
+		double numInst = test.numInstances(), correct = 0.0f;
 		
 		Classifier m_classifier = AbstractClassifier.forName(classifierName, options);
 		
-		//reading the files and getting all the instances of each one
-		Instances instancesTrain = fileReader(trainingFile);
-		Instances instancesTest = fileReader(testingFile);
-		
-		//set the Class (what we want to predict)
-		instancesTest.setClass(instancesTest.attribute(classAttribute)); 
-		
-		//setting the training class index to be the same as the testing class index
-		instancesTrain.setClassIndex(instancesTest.classIndex()); 
-		
-		double numInst = instancesTest.numInstances(), correct = 0.0f;
-			
 		//building the model
-		m_classifier.buildClassifier(instancesTrain);
+		m_classifier.buildClassifier(train);
+		
+		String outputFile = "/home/leac/Documents/U4/Comp401/" + classifierName + "Model.csv";
 		
 		//writing the header to the output csv
 		File output = new File(outputFile);
@@ -66,18 +52,18 @@ public class Driver {
 		
 		for(int i = 0;i < numInst; i++){
 			
-			Instance current = instancesTest.instance(i);
+			Instance current = test.instance(i);
 			
 			Instance temp = (Instance)current.copy();
 			
 			//attributes are given as array positions, getting the string value
-			String actualVal = current.stringValue(instancesTest.classIndex());
+			String actualVal = current.stringValue(test.classIndex());
 			
 			//getting the predicted value of the class attribute of this instance
-			double predicted = m_classifier.classifyInstance(instancesTest.instance(i));
+			double predicted = m_classifier.classifyInstance(test.instance(i));
 			
 			//setting this value to the temp class attribute
-			temp.setValue(instancesTest.classIndex(), predicted);
+			temp.setValue(test.classIndex(), predicted);
 			
 			//getting the string value
 			String predictedVal = temp.stringValue(temp.classIndex());
@@ -100,5 +86,26 @@ public class Driver {
         sb.append("J48 classification precision: " + (100*correct/numInst) + "%");
 		pw.write(sb.toString());
         pw.close();
+	}
+	
+	public static void main(String [] args) throws Exception {
+		
+		//make these strings be taken in as program arguments
+		String trainingFile = "/home/leac/Documents/U4/Comp401/TrainingData.arff";
+		
+		String testingFile = "/home/leac/Documents/U4/Comp401/TestingData.arff";
+		
+		String classAttribute = "Stage";
+		
+		String [] options = null;
+		
+		//reading the files and getting all the instances of each one
+		Instances instancesTrain = fileReader(trainingFile);
+		Instances instancesTest = fileReader(testingFile);
+		
+		predict(instancesTrain, instancesTest, "J48", options, classAttribute);
+		predict(instancesTrain, instancesTest, "ZeroR", options, classAttribute);
+		
+		
 	}
 }
