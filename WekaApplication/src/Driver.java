@@ -83,7 +83,7 @@ public class Driver {
 		}
 		
 		sb.append('\n');
-        sb.append("J48 classification precision: " + (100*correct/numInst) + "%");
+        sb.append(classifierName + " classification precision: " + (100*correct/numInst) + "%");
 		pw.write(sb.toString());
         pw.close();
 	}
