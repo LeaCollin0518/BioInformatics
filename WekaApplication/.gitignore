@@ -4,3 +4,4 @@
 
 # compiled java bytecode
 *.class
+bin/
