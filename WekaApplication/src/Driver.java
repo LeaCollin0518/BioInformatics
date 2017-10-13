@@ -47,25 +47,33 @@ public class Driver {
 		
 		instancesTest.setClass(instancesTest.attribute("Stage")); //set the Class (what we want to predict) to be Stage
 		
-		//System.out.println(instancesTest.classAttribute());
-
-		instancesTrain.setClassIndex(instancesTest.classIndex()); //Set the ClassIndex to be the classIndex (straightforward)
+		instancesTrain.setClassIndex(instancesTest.classIndex()); //set the ClassIndex to be the classIndex (straightforward)
 		
 		double sum = instancesTest.numInstances(), correct = 0.0f;
-		
+				
 		m_classifier.buildClassifier(instancesTrain);
 		
 		for(int i = 0;i<sum;i++){
 			
-			double actual = instancesTest.instance(i).classValue() + 1;
-			double predicted = m_classifier.classifyInstance(instancesTest.instance(i)) + 1;
+			Instance current = instancesTest.instance(i);
+			
+			Instance temp = (Instance)current.copy();
+			
+			String actualVal = current.stringValue(instancesTest.classIndex());
+			
+			double predicted = m_classifier.classifyInstance(instancesTest.instance(i));
+			
+			temp.setValue(instancesTest.classIndex(), predicted);
+			
+			String predictedVal = temp.stringValue(temp.classIndex());
+			
 			
 			System.out.print("Instance: " + (i+1) + 
-					"		Actual: Stage " + (int)(actual) + 
-					"		Predicted: Stage " + (int)predicted);
+					"		Actual: " + actualVal + 
+					"		Predicted: " + predictedVal);
 			
 			
-			if(predicted == actual) {// If the prediction of value and value are equal (classified in the testing corpus provides must be the correct answer, the results are meaningful)
+			if(predictedVal.equals(actualVal)) {// If the prediction of value and value are equal (classified in the testing corpus provides must be the correct answer, the results are meaningful)
 		
 				correct++; //The correct value 1
 				System.out.println("		Correct");
