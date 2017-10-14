@@ -6,6 +6,7 @@ import weka.core.Instances;
 import weka.classifiers.Classifier;
 import weka.classifiers.AbstractClassifier;
 import weka.core.converters.ArffLoader;
+import weka.attributeSelection.*;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.IOException;
@@ -26,6 +27,13 @@ public class Driver {
 		Instances instancesTrain = fileReader(trainingFile);
 		Instances instancesTest = fileReader(testingFile);
 		
+		//selecting most relevant attributes
+		Instances [] reduced = attributeSelector(instancesTrain, instancesTest);
+		
+		instancesTrain = reduced[0];
+		
+		instancesTest = reduced[1];
+		
 		//what attribute do we want to predict
 		String classAttribute = "Stage";
 		
@@ -45,6 +53,7 @@ public class Driver {
 		}
 		
 		for(HashMap.Entry <String, Double> entry : precisionVals.entrySet()) {
+			
 			if(entry.getValue() > maxPrecision) {
 				maxPrecision = entry.getValue();
 				bestMethod = entry.getKey();
@@ -52,7 +61,6 @@ public class Driver {
 		}
 		
 		System.out.println("Best Method: " + bestMethod + ", Precision: " + maxPrecision);
-		System.out.println("Test");
 	}
 		
 	public static Instances fileReader(String input) throws IOException {
@@ -135,5 +143,22 @@ public class Driver {
         Double precision = 100*correct/numInst;
         
         return precision;
+	}
+	
+	public static Instances [] attributeSelector(Instances train, Instances test) throws Exception {
+		
+		AttributeSelection selector = new AttributeSelection();
+		
+		CfsSubsetEval evaluator = new CfsSubsetEval();
+		BestFirst search = new BestFirst();
+		
+		selector.SelectAttributes(train);
+		
+		Instances trainTemp = selector.reduceDimensionality(train);
+		Instances trainTest = selector.reduceDimensionality(test);
+		
+		Instances [] reduced = {trainTemp, trainTest};
+
+		return reduced;
 	}
 }
