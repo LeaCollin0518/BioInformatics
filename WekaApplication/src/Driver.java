@@ -2,11 +2,11 @@ import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.converters.ArffLoader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.IOException;
 import weka.classifiers.Classifier;
 import weka.classifiers.AbstractClassifier;
+import java.util.HashMap;
 
 public class Driver {
 	
@@ -23,15 +23,34 @@ public class Driver {
 		Instances instancesTrain = fileReader(trainingFile);
 		Instances instancesTest = fileReader(testingFile);
 		
-		
+		//what attribute do we want to predict
 		String classAttribute = "Stage";
 		
 		String [] options = null;
 		
-		predict(instancesTrain, instancesTest, "J48", options, classAttribute, outputDir);
-		predict(instancesTrain, instancesTest, "ZeroR", options, classAttribute, outputDir);
+		String [] classifiers = {"ZeroR", "J48", "RandomForest", "RandomTree", "NaiveBayes"};
+		
+		//need to keep track of the precision of different algorithms
+		HashMap <String, Double> precisionVals = new HashMap <String, Double>();
+		double maxPrecision = 0.0;
+		String bestMethod = "";
+		
+		//running each different classifier, population HashMap to store each precision value
+		for(int i = 0; i < classifiers.length; i++) {
+			String toTest = classifiers[i];
+			precisionVals.put(toTest, predict(instancesTrain, instancesTest, toTest, options, classAttribute, outputDir));
+		}
+		
+		for(HashMap.Entry <String, Double> entry : precisionVals.entrySet()) {
+			if(entry.getValue() > maxPrecision) {
+				maxPrecision = entry.getValue();
+				bestMethod = entry.getKey();
+			}
+		}
+		
+		System.out.println("Best Method: " + bestMethod + ", Precision: " + maxPrecision);
 	}
-
+		
 	public static Instances fileReader(String input) throws IOException {
 
 		File inputFile = new File(input);
@@ -43,7 +62,7 @@ public class Driver {
 		
 	}
 	
-	public static void predict(Instances train, Instances test, String classifierName, 
+	public static Double predict(Instances train, Instances test, String classifierName, 
 			String [] options, String classAttribute, String outputDir) throws Exception {
 		
 		//set the Class (what we want to predict)
@@ -106,8 +125,11 @@ public class Driver {
 		}
 		
 		sb.append('\n');
-        sb.append(classifierName + " classification precision: " + (100*correct/numInst) + "%");
 		pw.write(sb.toString());
         pw.close();
+        
+        Double precision = 100*correct/numInst;
+        
+        return precision;
 	}
 }
