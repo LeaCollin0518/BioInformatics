@@ -1,11 +1,14 @@
+/*
+ * @author Lea Collin
+ */
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.classifiers.Classifier;
+import weka.classifiers.AbstractClassifier;
 import weka.core.converters.ArffLoader;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.IOException;
-import weka.classifiers.Classifier;
-import weka.classifiers.AbstractClassifier;
 import java.util.HashMap;
 
 public class Driver {
@@ -79,7 +82,7 @@ public class Driver {
 		m_classifier.buildClassifier(train);
 		
 		
-		String outputFile = outputDir + classifierName + "Model.csv";
+		String outputFile = outputDir + classifierName + "Predicted.csv";
 		
 		//writing the header to the output csv
 		File output = new File(outputFile);
