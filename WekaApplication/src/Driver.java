@@ -27,12 +27,16 @@ public class Driver {
 		Instances instancesTrain = fileReader(trainingFile);
 		Instances instancesTest = fileReader(testingFile);
 		
-		//selecting most relevant attributes
-		Instances [] reduced = attributeSelector(instancesTrain, instancesTest);
+		String reduce = "no";
 		
-		instancesTrain = reduced[0];
-		
-		instancesTest = reduced[1];
+		if(reduce.equals("yes")){
+			//selecting most relevant attributes
+			Instances [] reduced = attributeSelector(instancesTrain, instancesTest);
+			
+			instancesTrain = reduced[0];
+			
+			instancesTest = reduced[1];
+		}
 		
 		//what attribute do we want to predict
 		String classAttribute = "Stage";
