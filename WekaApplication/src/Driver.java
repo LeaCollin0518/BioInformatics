@@ -153,8 +153,8 @@ public class Driver {
 		
 		AttributeSelection selector = new AttributeSelection();
 		
-		CfsSubsetEval evaluator = new CfsSubsetEval();
-		BestFirst search = new BestFirst();
+		//CfsSubsetEval evaluator = new CfsSubsetEval();
+		//BestFirst search = new BestFirst();
 		
 		selector.SelectAttributes(train);
 		
