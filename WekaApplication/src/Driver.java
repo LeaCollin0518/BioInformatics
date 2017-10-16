@@ -27,11 +27,14 @@ public class Driver {
 		Instances instancesTrain = fileReader(trainingFile);
 		Instances instancesTest = fileReader(testingFile);
 		
-		String reduce = "no";
+		String reduce = "yes";
 		
 		if(reduce.equals("yes")){
 			//selecting most relevant attributes
-			Instances [] reduced = attributeSelector(instancesTrain, instancesTest);
+			//String evaluator = "cfs";
+			String evaluator = "corr";
+			
+			Instances [] reduced = attributeSelector(instancesTrain, instancesTest, evaluator);
 			
 			instancesTrain = reduced[0];
 			
@@ -149,14 +152,28 @@ public class Driver {
         return precision;
 	}
 	
-	public static Instances [] attributeSelector(Instances train, Instances test) throws Exception {
+	public static Instances [] attributeSelector(Instances train, Instances test, String evaluator) throws Exception {
 		
 		AttributeSelection selector = new AttributeSelection();
 		
-		//CfsSubsetEval evaluator = new CfsSubsetEval();
-		//BestFirst search = new BestFirst();
-		
+		if (evaluator.equals("cfs")) {
+			CfsSubsetEval eval = new CfsSubsetEval();
+			BestFirst search = new BestFirst();
+			selector.setEvaluator(eval);
+			selector.setSearch(search);
+		}
+		else if(evaluator.equals("corr")) {
+			CorrelationAttributeEval eval = new CorrelationAttributeEval();
+	        Ranker search = new Ranker();
+	        selector.setEvaluator(eval);
+			selector.setSearch(search);
+		}
+        
 		selector.SelectAttributes(train);
+		
+		//rankedAttributes gives the ranking of the attributes along with their weights
+		//selected Attributes just gives the order of the ranking
+
 		
 		Instances trainTemp = selector.reduceDimensionality(train);
 		Instances trainTest = selector.reduceDimensionality(test);
