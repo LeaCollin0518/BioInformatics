@@ -40,12 +40,13 @@ public class Driver {
 			instancesTest = reduced[1];
 		}
 		
-		String poo = "I don't actually know what I'm doing";
-		
 		//what attribute do we want to predict
 		String classAttribute = "Stage";
 		
-		String [] options = null;
+		
+		connectToDatabase();
+		
+		/*String [] options = null;
 		
 		String [] classifiers = {"ZeroR", "J48", "RandomForest", "RandomTree", "NaiveBayes"};
 		
@@ -68,7 +69,7 @@ public class Driver {
 			}
 		}
 		
-		System.out.println("Best Method: " + bestMethod + ", Precision: " + maxPrecision);
+		System.out.println("Best Method: " + bestMethod + ", Precision: " + maxPrecision);*/
 	}
 		
 	public static Instances fileReader(String input) throws IOException {
@@ -170,15 +171,21 @@ public class Driver {
 		return reduced;
 	}
 	
-	public static void connectToDatabase() throws SQLException {
+	private static void connectToDatabase() throws SQLException {
 		
-		String url = "jdbc:postgresql://localhost/test";
-		Properties props = new Properties();
-		props.setProperty("user","lea");
-		props.setProperty("password","summer2017");
-		props.setProperty("ssl","true");
-		Connection conn = DriverManager.getConnection(url, props);
+		String usrDB = "lea";
+	    String passwordDB = "summer2017";
+	    String conDB = "jdbc:postgresql://mustang.biol.mcgill.ca/";
+
+	    try {
+	    	Class.forName("org.postgresql.Driver");
+			
+	    	Connection conn = DriverManager.getConnection(conDB + "soy2030", usrDB, passwordDB);
+			conn.close();
 		
-		conn.close();
-	}
+			Statement stmt = conn.createStatement();
+		} 
+	    catch (ClassNotFoundException e) {
+		}
+	}	
 }
