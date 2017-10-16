@@ -43,8 +43,11 @@ public class Driver {
 		//what attribute do we want to predict
 		String classAttribute = "Stage";
 		
+		String dbUsr = args[3];
+		String dbPwd = args[4];
+		String dbConfig = args[5];
 		
-		connectToDatabase();
+		connectToDatabase(dbUsr, dbPwd, dbConfig);
 		
 		/*String [] options = null;
 		
@@ -171,18 +174,13 @@ public class Driver {
 		return reduced;
 	}
 	
-	private static void connectToDatabase() throws SQLException {
-		
-		String usrDB = "lea";
-	    String passwordDB = "summer2017";
-	    String conDB = "jdbc:postgresql://mustang.biol.mcgill.ca/";
-
+	private static void connectToDatabase(String usrDB, String passwordDB, String conDB) throws SQLException {
 	    try {
 	    	Class.forName("org.postgresql.Driver");
-	    	Connection conn = DriverManager.getConnection(conDB + "soy2030", usrDB, passwordDB);
+	    	Connection conn = DriverManager.getConnection(conDB, usrDB, passwordDB);
 		
 			Statement stmt = conn.createStatement();
-			ResultSet rs = stmt.executeQuery("SELECT * FROM soyidentification");
+			ResultSet rs = stmt.executeQuery("SELECT * FROM soyidentification LIMIT 5");
 			while(rs.next()) {
 				Integer bc = rs.getInt("barcode");
 				System.out.println("Barcode: " + bc);
