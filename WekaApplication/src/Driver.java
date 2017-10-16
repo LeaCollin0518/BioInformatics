@@ -32,7 +32,10 @@ public class Driver {
 		if(reduce.equals("yes")){
 			//selecting most relevant attributes
 			//String evaluator = "cfs";
-			String evaluator = "corr";
+			//String evaluator = "corr";
+			//String evaluator = "oner";
+			//String evaluator = "principal";
+			String evaluator = "relief";
 			
 			Instances [] reduced = attributeSelector(instancesTrain, instancesTest, evaluator);
 			
@@ -168,6 +171,26 @@ public class Driver {
 	        selector.setEvaluator(eval);
 			selector.setSearch(search);
 		}
+		else if(evaluator.equals("oner")) {
+			OneRAttributeEval eval = new OneRAttributeEval();
+	        Ranker search = new Ranker();
+	        selector.setEvaluator(eval);
+			selector.setSearch(search);
+		}
+		/*need to fix this
+		 * else if(evaluator.equals("principal")) {
+			PrincipalComponents eval = new PrincipalComponents();
+	        Ranker search = new Ranker();
+	        selector.setEvaluator(eval);
+			selector.setSearch(search);
+		}*/
+		else if(evaluator.equals("relief")) {
+			ReliefFAttributeEval eval = new ReliefFAttributeEval();
+	        Ranker search = new Ranker();
+	        selector.setEvaluator(eval);
+			selector.setSearch(search);
+		}
+		
         
 		selector.SelectAttributes(train);
 		
@@ -177,6 +200,7 @@ public class Driver {
 		
 		Instances trainTemp = selector.reduceDimensionality(train);
 		Instances trainTest = selector.reduceDimensionality(test);
+		
 		
 		Instances [] reduced = {trainTemp, trainTest};
 
