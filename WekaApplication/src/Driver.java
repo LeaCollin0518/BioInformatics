@@ -11,6 +11,8 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Properties;
+import java.sql.*;
 
 public class Driver {
 	
@@ -37,6 +39,8 @@ public class Driver {
 			
 			instancesTest = reduced[1];
 		}
+		
+		String poo = "I don't actually know what I'm doing";
 		
 		//what attribute do we want to predict
 		String classAttribute = "Stage";
@@ -164,5 +168,17 @@ public class Driver {
 		Instances [] reduced = {trainTemp, trainTest};
 
 		return reduced;
+	}
+	
+	public static void connectToDatabase() throws SQLException {
+		
+		String url = "jdbc:postgresql://localhost/test";
+		Properties props = new Properties();
+		props.setProperty("user","lea");
+		props.setProperty("password","summer2017");
+		props.setProperty("ssl","true");
+		Connection conn = DriverManager.getConnection(url, props);
+		
+		conn.close();
 	}
 }
