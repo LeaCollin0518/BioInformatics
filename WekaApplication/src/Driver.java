@@ -173,19 +173,6 @@ public class Driver {
 	
 	private static void connectToDatabase() throws SQLException {
 		
-		String usrDB = "lea";
-	    String passwordDB = "summer2017";
-	    String conDB = "jdbc:postgresql://mustang.biol.mcgill.ca/";
-
-	    try {
-	    	Class.forName("org.postgresql.Driver");
-			
-	    	Connection conn = DriverManager.getConnection(conDB + "soy2030", usrDB, passwordDB);
-			conn.close();
 		
-			Statement stmt = conn.createStatement();
-		} 
-	    catch (ClassNotFoundException e) {
-		}
 	}	
 }
