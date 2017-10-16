@@ -173,6 +173,30 @@ public class Driver {
 	
 	private static void connectToDatabase() throws SQLException {
 		
+		String usrDB = "lea";
+	    String passwordDB = "summer2017";
+	    String conDB = "jdbc:postgresql://mustang.biol.mcgill.ca/";
+
+	    try {
+	    	Class.forName("org.postgresql.Driver");
+	    	Connection conn = DriverManager.getConnection(conDB + "soy2030", usrDB, passwordDB);
 		
+			Statement stmt = conn.createStatement();
+			ResultSet rs = stmt.executeQuery("SELECT * FROM soyidentification");
+			while(rs.next()) {
+				Integer bc = rs.getInt("barcode");
+				System.out.println("Barcode: " + bc);
+			}
+			rs.close();
+			conn.close();
+		} 
+	    catch (ClassNotFoundException e) {
+
+			System.out.println("Where is your PostgreSQL JDBC Driver? "
+					+ "Include in your library path!");
+			e.printStackTrace();
+			return;
+
+		}
 	}	
 }
