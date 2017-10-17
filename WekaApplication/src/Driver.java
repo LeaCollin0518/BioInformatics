@@ -180,12 +180,53 @@ public class Driver {
 	    	Connection conn = DriverManager.getConnection(conDB, usrDB, passwordDB);
 		
 			Statement stmt = conn.createStatement();
-			ResultSet rs = stmt.executeQuery("SELECT * FROM soyidentification LIMIT 5");
-			while(rs.next()) {
-				Integer bc = rs.getInt("barcode");
-				System.out.println("Barcode: " + bc);
+			ResultSet trainingSet = stmt.executeQuery("SELECT i.camera, i.fdate, o.area, o.perimeter, "
+					+ "o.circularity, o.compactness, o.major, "
+					+ "o.minor, o.eccentricity, o.hisgreypeak, "
+					+ "o.q1grey, o.q2grey, o.q3grey, o.q1r, o.q2r, o.q3r, o.q1g, o.q2g, o.q3g, o.q1b, o.q2b, o.q3b,"
+					+ " s.growthcond, d.das, "
+					+ "CASE WHEN ( d.das <= 17 ) THEN 'Stage 1' "
+					+ "WHEN ( d.das > 18 AND d.das <= 25 ) THEN 'Stage 2' "
+					+ "WHEN ( d.das > 25 AND d.das <= 32 ) THEN 'Stage 3' "
+					+ "WHEN ( d.das > 33 AND d.das <= 40 ) THEN 'Stage 4' "
+					+ "WHEN ( d.das > 40 AND d.das <= 47 ) THEN 'Stage 5' "
+					+ "ELSE 'Stage 6' END Stage "
+					+ "FROM imageev AS i, imgobjectev AS o, soyidentification AS s, dasplusev AS d "
+					+ "WHERE i.assayid = o.assayid "
+					+ "AND i.imgid = o.imgid "
+					+ "AND s.barcode = ( CAST( i.barcode AS INTEGER ) ) "
+					+ "AND i.assayid = d.assayid "
+					+ "AND i.fdate = d.fdate "
+					+ "AND i.set = d.set "
+					+ "AND s.line = 1 "
+					+ "AND i.camera = 'vis-side-1-0' "
+					+ "AND i.set = '3'");
+			while(trainingSet.next()) {
+				Double area = trainingSet.getDouble("area");
+				Double perimeter = trainingSet.getDouble("perimeter");
+				Double circularity = trainingSet.getDouble("circularity");
+				Double compactness = trainingSet.getDouble("compactness");
+				Double major = trainingSet.getDouble("major");
+				Double minor = trainingSet.getDouble("minor");
+				Double eccentricity = trainingSet.getDouble("eccentricity");
+				Double hisgreypeak = trainingSet.getDouble("hisgreypeak");
+				Double q1grey = trainingSet.getDouble("q1grey");
+				Double q2grey = trainingSet.getDouble("q2grey");
+				Double q3grey = trainingSet.getDouble("q3grey");
+				Double q1r = trainingSet.getDouble("q1r");
+				Double q2r = trainingSet.getDouble("q2r");
+				Double q3r = trainingSet.getDouble("q3r");
+				Double q1g = trainingSet.getDouble("q1g");
+				Double q2g = trainingSet.getDouble("q2g");
+				Double q3g = trainingSet.getDouble("q3g");
+				Double q1b = trainingSet.getDouble("q1b");
+				Double q2b = trainingSet.getDouble("q2b");
+				Double q3b = trainingSet.getDouble("q3b");
+				String stage = trainingSet.getString("Stage");
+				
+				System.out.println("Area: " + circularity + ", Perimeter: " + stage);
 			}
-			rs.close();
+			trainingSet.close();
 			conn.close();
 		} 
 	    catch (ClassNotFoundException e) {
