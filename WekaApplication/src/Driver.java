@@ -8,6 +8,7 @@ import weka.classifiers.AbstractClassifier;
 import weka.core.converters.ArffLoader;
 import weka.attributeSelection.*;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.IOException;
 import java.util.HashMap;
@@ -18,8 +19,16 @@ public class Driver {
 	
 	public static void main(String [] args) throws Exception {
 		
+		String dbUsr = args[3];
+		String dbPwd = args[4];
+		String dbConfig = args[5];
+		
+		connectToDatabase(dbUsr, dbPwd, dbConfig);
+		
 		//make these strings be taken in as program arguments
+		
 		String trainingFile = args[0];
+		//String trainingFile = "/home/leac/Documents/U4/Comp401/databasetraining.arff";
 		
 		String testingFile = args[1];
 		
@@ -29,7 +38,7 @@ public class Driver {
 		Instances instancesTrain = fileReader(trainingFile);
 		Instances instancesTest = fileReader(testingFile);
 		
-		String reduce = "no";
+		/*String reduce = "no";
 		
 		if(reduce.equals("yes")){
 			//selecting most relevant attributes
@@ -38,19 +47,13 @@ public class Driver {
 			instancesTrain = reduced[0];
 			
 			instancesTest = reduced[1];
-		}
+		}*/
 		
 		//what attribute do we want to predict
 		String classAttribute = "Stage";
 		
-		String dbUsr = args[3];
-		String dbPwd = args[4];
-		String dbConfig = args[5];
-		
-		connectToDatabase(dbUsr, dbPwd, dbConfig);
-		
-		/*String [] options = null;
-		
+		String [] options = null;
+				
 		String [] classifiers = {"ZeroR", "J48", "RandomForest", "RandomTree", "NaiveBayes"};
 		
 		//need to keep track of the precision of different algorithms
@@ -72,7 +75,7 @@ public class Driver {
 			}
 		}
 		
-		System.out.println("Best Method: " + bestMethod + ", Precision: " + maxPrecision);*/
+		System.out.println("Best Method: " + bestMethod + ", Precision: " + maxPrecision);
 	}
 		
 	public static Instances fileReader(String input) throws IOException {
@@ -87,7 +90,7 @@ public class Driver {
 	}
 	
 	public static Double predict(Instances train, Instances test, String classifierName, 
-			String [] options, String classAttribute, String outputDir) throws Exception {
+		String [] options, String classAttribute, String outputDir) throws Exception {
 		
 		//set the Class (what we want to predict)
 		test.setClass(test.attribute(classAttribute));
@@ -116,7 +119,7 @@ public class Driver {
         sb.append("Predicted");
         sb.append('\n');
 		
-		for(int i = 0;i < numInst; i++){
+		for(int i = 0; i < numInst; i++){
 			
 			Instance current = test.instance(i);
 			
@@ -174,33 +177,50 @@ public class Driver {
 		return reduced;
 	}
 	
-	private static void connectToDatabase(String usrDB, String passwordDB, String conDB) throws SQLException {
+	private static void connectToDatabase(String usrDB, String passwordDB, String conDB) throws SQLException, FileNotFoundException {
+		File output = new File("/home/leac/Documents/U4/Comp401/databasetraining.arff");
+		PrintWriter pw = new PrintWriter(output);
+        StringBuilder sb = new StringBuilder();
+        
+        sb.append("@relation databasetraining" + "\n" +  "\n" + "@attribute area numeric" + "\n" + "@attribute perimeter numeric" + "\n" + 
+        "@attribute circularity numeric" + "\n" + "@attribute compactness numeric" + "\n" + "@attribute major numeric" + "\n" + 
+        "@attribute minor numeric" + "\n" + "@attribute eccentricity numeric" + "\n" + "@attribute hisgreypeak numeric" + "\n" + 
+        "@attribute q1grey numeric" + "\n" + "@attribute q2grey numeric" + "\n" + "@attribute q3grey numeric" + "\n" + 
+        "@attribute q1r numeric" + "\n" + "@attribute q2r numeric" + "\n" + "@attribute q3r numeric" + "\n" + "@attribute q1g numeric" + "\n" + 
+        "@attribute q2g numeric" + "\n" + "@attribute q3g numeric" + "\n" + "@attribute q1b numeric" + "\n" + "@attribute q2b numeric" + "\n" + 
+        "@attribute q3b numeric" + "\n" +  "@attribute Stage {'Stage 3','Stage 1','Stage 2','Stage 4', 'Stage 5'}" + "\n" + "\n" + "@data" + "\n");
+        
+        pw.write(sb.toString());
 	    try {
 	    	Class.forName("org.postgresql.Driver");
 	    	Connection conn = DriverManager.getConnection(conDB, usrDB, passwordDB);
 		
-			Statement stmt = conn.createStatement();
-			ResultSet trainingSet = stmt.executeQuery("SELECT i.camera, i.fdate, o.area, o.perimeter, "
-					+ "o.circularity, o.compactness, o.major, "
-					+ "o.minor, o.eccentricity, o.hisgreypeak, "
-					+ "o.q1grey, o.q2grey, o.q3grey, o.q1r, o.q2r, o.q3r, o.q1g, o.q2g, o.q3g, o.q1b, o.q2b, o.q3b,"
-					+ " s.growthcond, d.das, "
-					+ "CASE WHEN ( d.das <= 17 ) THEN 'Stage 1' "
-					+ "WHEN ( d.das > 18 AND d.das <= 25 ) THEN 'Stage 2' "
-					+ "WHEN ( d.das > 25 AND d.das <= 32 ) THEN 'Stage 3' "
-					+ "WHEN ( d.das > 33 AND d.das <= 40 ) THEN 'Stage 4' "
-					+ "WHEN ( d.das > 40 AND d.das <= 47 ) THEN 'Stage 5' "
-					+ "ELSE 'Stage 6' END Stage "
-					+ "FROM imageev AS i, imgobjectev AS o, soyidentification AS s, dasplusev AS d "
-					+ "WHERE i.assayid = o.assayid "
-					+ "AND i.imgid = o.imgid "
-					+ "AND s.barcode = ( CAST( i.barcode AS INTEGER ) ) "
-					+ "AND i.assayid = d.assayid "
-					+ "AND i.fdate = d.fdate "
-					+ "AND i.set = d.set "
-					+ "AND s.line = 1 "
-					+ "AND i.camera = 'vis-side-1-0' "
-					+ "AND i.set = '3'");
+	    	String sql = "SELECT i.camera, i.fdate, o.area, "
+	    			+ "o.perimeter, o.circularity, o.compactness, "
+	    			+ "o.major, o.minor, o.eccentricity, o.hisgreypeak, "
+	    			+ "o.q1grey, o.q2grey, o.q3grey, "
+	    			+ "o.q1r, o.q2r, o.q3r, "
+	    			+ "o.q1g, o.q2g, o.q3g, "
+	    			+ "o.q1b, o.q2b, o.q3b, "
+	    			+ "s.growthcond, d.das, "
+	    			+ "CASE WHEN ( d.das <= 17 ) THEN 'Stage 1' "
+	    			+ "WHEN ( d.das > 18 AND d.das <= 25 ) THEN 'Stage 2' "
+	    			+ "WHEN ( d.das > 25 AND d.das <= 32 ) THEN 'Stage 3' "
+	    			+ "WHEN ( d.das > 32 AND d.das <= 39 ) THEN 'Stage 4' "
+	    			+ "WHEN ( d.das > 39 AND d.das <= 46 ) THEN 'Stage 5' "
+	    			+ "ELSE 'Stage 6' END Stage "
+	    			+ "FROM imageev AS i, imgobjectev AS o, soyidentification AS s, dasplusev AS d "
+	    			+ "WHERE i.assayid = o.assayid "
+	    			+ "AND i.imgid = o.imgid "
+	    			+ "AND s.barcode = ( CAST( i.barcode AS INTEGER ) ) "
+	    			+ "AND i.assayid = d.assayid AND i.fdate = d.fdate "
+	    			+ "AND i.set = d.set "
+	    			+ "AND s.line = 1 "
+	    			+ "AND i.camera = 'vis-side-1-0' "
+	    			+ "AND i.set = '3'";
+	    	
+	    	PreparedStatement ps = conn.prepareStatement(sql);
+			ResultSet trainingSet = ps.executeQuery();
 			while(trainingSet.next()) {
 				Double area = trainingSet.getDouble("area");
 				Double perimeter = trainingSet.getDouble("perimeter");
@@ -224,15 +244,17 @@ public class Driver {
 				Double q3b = trainingSet.getDouble("q3b");
 				String stage = trainingSet.getString("Stage");
 				
-				System.out.println("Area: " + circularity + ", Perimeter: " + stage);
+				pw.write(area + ", " + perimeter + ", " + circularity + ", " + compactness + ", " + major + ", " + minor + ", " + eccentricity
+						+ ", " + hisgreypeak + ", " + q1grey + ", " + q2grey + ", " + q3grey + ", " + q1r + ", " + q2r + ", " + q3r
+						+ ", " + q1g + ", " + q2g + ", " + q3g + ", " + q1b + ", " + q2b + ", " + q3b + "," + "'" + stage + "'" + "\n");
 			}
+			pw.close();
 			trainingSet.close();
 			conn.close();
 		} 
 	    catch (ClassNotFoundException e) {
 
-			System.out.println("Where is your PostgreSQL JDBC Driver? "
-					+ "Include in your library path!");
+			System.out.println("Improper database connection set-up.");
 			e.printStackTrace();
 			return;
 
