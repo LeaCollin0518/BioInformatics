@@ -27,8 +27,8 @@ public class Driver {
 		
 		//make these strings be taken in as program arguments
 		
-		String trainingFile = args[0];
-		//String trainingFile = "/home/leac/Documents/U4/Comp401/databasetraining.arff";
+		//String trainingFile = args[0];
+		String trainingFile = "/home/leac/Documents/U4/Comp401/output/databasetraining.arff";
 		
 		String testingFile = args[1];
 		
@@ -178,7 +178,7 @@ public class Driver {
 	}
 	
 	private static void connectToDatabase(String usrDB, String passwordDB, String conDB) throws SQLException, FileNotFoundException {
-		File output = new File("/home/leac/Documents/U4/Comp401/databasetraining.arff");
+		File output = new File("/home/leac/Documents/U4/Comp401/output/databasetraining.arff");
 		PrintWriter pw = new PrintWriter(output);
         StringBuilder sb = new StringBuilder();
         
