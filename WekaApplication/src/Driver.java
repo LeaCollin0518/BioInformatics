@@ -27,7 +27,7 @@ public class Driver {
 		Instances instancesTrain = fileReader(trainingFile);
 		Instances instancesTest = fileReader(testingFile);
 		
-		String reduce = "yes";
+		String reduce = "no";
 		
 		if(reduce.equals("yes")){
 			//selecting most relevant attributes
@@ -49,7 +49,7 @@ public class Driver {
 		
 		String [] options = null;
 		
-		String [] classifiers = {"ZeroR", "J48", "RandomForest", "RandomTree", "NaiveBayes"};
+		String [] classifiers = {"ZeroR", "J48", "RandomTree", "RandomForest", "NaiveBayes"};
 		
 		//need to keep track of the precision of different algorithms
 		HashMap <String, Double> precisionVals = new HashMap <String, Double>();
