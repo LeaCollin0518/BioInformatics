@@ -12,26 +12,51 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Scanner;
 import java.sql.*;
 
 public class Driver {
 	
 	public static void main(String [] args) throws Exception {
 		
-		String dbUsr = args[3];
-		String dbPwd = args[4];
-		String dbConfig = args[5];
 		
-		connectToDatabase(dbUsr, dbPwd, dbConfig);
+		///home/leac/Documents/U4/Comp401/output/ lea summer2017 
+		//String outputDir = args[0];
+		//String dbUsr = args[1];
+		//String dbPwd = args[2];
 		
+		String dbConfig = args[0];
 		
-		//make these strings be taken in as program arguments
+		Scanner sc = new Scanner(System.in);
 		
-		String trainingFile = args[0];
+		System.out.println("A BUNCH OF DIRECTIONS");
+		System.out.println("Please enter the directory name of where you would like to store all program outputs:");
 		
-		String testingFile = args[1];
+		String outputDir = sc.next();
+		//String outputDir = "/home/leac/Documents/U4/Comp401/output/";
 		
-		String outputDir = args[2];
+		System.out.println("Now please enter your database username:");
+		String dbUsr = sc.next();
+		//String dbUser = "lea";
+		
+		System.out.println("Password:");
+		String dbPwd = sc.next();
+		//String dbPwd = "summer2017";
+		
+		System.out.println("Please enter the attribute you would like to predict:");
+		String classAttribute = sc.next();
+		//String classAttribute = "Stage";
+		
+		System.out.println("Finally, please enter the name of an algorithm you would like to test:");
+		String alg = sc.next();
+		//String alg = "J48";
+		
+		sc.close();
+		
+		String trainingFile = outputDir + "DatabaseTraining.arff";
+		String testingFile = outputDir + "DatabaseTesting.arff";
+		
+		connectToDatabase(dbUsr, dbPwd, dbConfig, trainingFile, testingFile);
 		
 		//reading the files and getting all the instances of each one
 		Instances instancesTrain = fileReader(trainingFile);
@@ -56,9 +81,6 @@ public class Driver {
 		}
 		
 		//what attribute do we want to predict
-		String classAttribute = "Stage";
-		
-		String [] options = null;
 		
 		String [] classifiers = {"ZeroR", "J48", "RandomTree", "RandomForest", "NaiveBayes"};
 		
@@ -70,7 +92,7 @@ public class Driver {
 		//running each different classifier, population HashMap to store each precision value
 		for(int i = 0; i < classifiers.length; i++) {
 			String toTest = classifiers[i];
-			precisionVals.put(toTest, predict(instancesTrain, instancesTest, toTest, options, classAttribute, outputDir));
+			precisionVals.put(toTest, predict(instancesTrain, instancesTest, toTest, classAttribute, outputDir));
 		}
 		
 		for(HashMap.Entry <String, Double> entry : precisionVals.entrySet()) {
@@ -95,9 +117,9 @@ public class Driver {
 		
 	}
 	
-	public static Double predict(Instances train, Instances test, String classifierName, 
-		String [] options, String classAttribute, String outputDir) throws Exception {
+	public static Double predict(Instances train, Instances test, String classifierName, String classAttribute, String outputDir) throws Exception {
 		
+		String [] options = null;
 		//set the Class (what we want to predict)
 		test.setClass(test.attribute(classAttribute));
 		
@@ -218,13 +240,14 @@ public class Driver {
 		return reduced;
 	}
 	
-	private static void connectToDatabase(String usrDB, String passwordDB, String conDB) throws SQLException, FileNotFoundException {
+	@SuppressWarnings("resource")
+	private static void connectToDatabase(String usrDB, String passwordDB, String conDB, String trainName, String testName) throws SQLException, FileNotFoundException {
 		
-		File trainingOutput = new File("/home/leac/Documents/U4/Comp401/output/DatabaseTraining.arff");
+		File trainingOutput = new File(trainName);
 		PrintWriter trainingPw = new PrintWriter(trainingOutput);
         StringBuilder sb = new StringBuilder();
         
-        File testingOutput = new File("/home/leac/Documents/U4/Comp401/output/DatabaseTesting.arff");
+        File testingOutput = new File(testName);
         PrintWriter testingPw = new PrintWriter(testingOutput);
         
         sb.append("@relation databasetraining" + "\n" +  "\n" + "@attribute area numeric" + "\n" + "@attribute perimeter numeric" + "\n" + 
@@ -383,7 +406,6 @@ public class Driver {
 
 			System.out.println("Improper database connection set-up.");
 			e.printStackTrace();
-			return;
 
 		}
 	}	
