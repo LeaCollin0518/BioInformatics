@@ -19,37 +19,31 @@ public class Driver {
 	
 	public static void main(String [] args) throws Exception {
 		
-		
-		///home/leac/Documents/U4/Comp401/output/ lea summer2017 
-		//String outputDir = args[0];
-		//String dbUsr = args[1];
-		//String dbPwd = args[2];
-		
-		String dbConfig = args[0];
+		String dbConfig = args[3];
 		
 		Scanner sc = new Scanner(System.in);
 		
 		System.out.println("A BUNCH OF DIRECTIONS");
 		System.out.println("Please enter the directory name of where you would like to store all program outputs:");
 		
-		String outputDir = sc.next();
-		//String outputDir = "/home/leac/Documents/U4/Comp401/output/";
+		//String outputDir = sc.next();
+		String outputDir = args[0];
 		
 		System.out.println("Now please enter your database username:");
-		String dbUsr = sc.next();
-		//String dbUser = "lea";
+		//String dbUsr = sc.next();
+		String dbUsr = args[1];
 		
 		System.out.println("Password:");
-		String dbPwd = sc.next();
-		//String dbPwd = "summer2017";
+		//String dbPwd = sc.next();
+		String dbPwd = args[2];
 		
 		System.out.println("Please enter the attribute you would like to predict:");
-		String classAttribute = sc.next();
-		//String classAttribute = "Stage";
+		//String classAttribute = sc.next();
+		String classAttribute = "Stage";
 		
 		System.out.println("Finally, please enter the name of an algorithm you would like to test:");
-		String alg = sc.next();
-		//String alg = "J48";
+		//String alg = sc.next();
+		String alg = "J48";
 		
 		sc.close();
 		
