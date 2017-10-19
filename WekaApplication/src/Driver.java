@@ -37,6 +37,7 @@ public class Driver {
 		Instances instancesTrain = fileReader(trainingFile);
 		Instances instancesTest = fileReader(testingFile);
 		
+		
 		String reduce = "no";
 		
 		if(reduce.equals("yes")){
@@ -81,7 +82,6 @@ public class Driver {
 		}
 		
 		System.out.println("Best Method: " + bestMethod + ", Precision: " + maxPrecision);
-		
 	}
 		
 	public static Instances fileReader(String input) throws IOException {
