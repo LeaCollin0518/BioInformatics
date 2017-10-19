@@ -12,7 +12,6 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Properties;
 import java.sql.*;
 
 public class Driver {
@@ -25,10 +24,10 @@ public class Driver {
 		
 		connectToDatabase(dbUsr, dbPwd, dbConfig);
 		
+		
 		//make these strings be taken in as program arguments
 		
 		String trainingFile = args[0];
-		//String trainingFile = "/home/leac/Documents/U4/Comp401/output/databasetraining.arff";
 		
 		String testingFile = args[1];
 		
@@ -38,7 +37,7 @@ public class Driver {
 		Instances instancesTrain = fileReader(trainingFile);
 		Instances instancesTest = fileReader(testingFile);
 		
-		/*String reduce = "no";
+		String reduce = "no";
 		
 		if(reduce.equals("yes")){
 			//selecting most relevant attributes
@@ -53,7 +52,7 @@ public class Driver {
 			instancesTrain = reduced[0];
 			
 			instancesTest = reduced[1];
-		}*/
+		}
 		
 		//what attribute do we want to predict
 		String classAttribute = "Stage";
@@ -82,6 +81,7 @@ public class Driver {
 		}
 		
 		System.out.println("Best Method: " + bestMethod + ", Precision: " + maxPrecision);
+		
 	}
 		
 	public static Instances fileReader(String input) throws IOException {
@@ -219,9 +219,13 @@ public class Driver {
 	}
 	
 	private static void connectToDatabase(String usrDB, String passwordDB, String conDB) throws SQLException, FileNotFoundException {
-		File output = new File("/home/leac/Documents/U4/Comp401/output/databasetraining.arff");
-		PrintWriter pw = new PrintWriter(output);
+		
+		File trainingOutput = new File("/home/leac/Documents/U4/Comp401/output/DatabaseTraining.arff");
+		PrintWriter trainingPw = new PrintWriter(trainingOutput);
         StringBuilder sb = new StringBuilder();
+        
+        File testingOutput = new File("/home/leac/Documents/U4/Comp401/output/DatabaseTesting.arff");
+        PrintWriter testingPw = new PrintWriter(testingOutput);
         
         sb.append("@relation databasetraining" + "\n" +  "\n" + "@attribute area numeric" + "\n" + "@attribute perimeter numeric" + "\n" + 
         "@attribute circularity numeric" + "\n" + "@attribute compactness numeric" + "\n" + "@attribute major numeric" + "\n" + 
@@ -231,12 +235,14 @@ public class Driver {
         "@attribute q2g numeric" + "\n" + "@attribute q3g numeric" + "\n" + "@attribute q1b numeric" + "\n" + "@attribute q2b numeric" + "\n" + 
         "@attribute q3b numeric" + "\n" +  "@attribute Stage {'Stage 1','Stage 2','Stage 3','Stage 4', 'Stage 5'}" + "\n" + "\n" + "@data" + "\n");
         
-        pw.write(sb.toString());
+        trainingPw.write(sb.toString());
+        testingPw.write(sb.toString());
+        
 	    try {
 	    	Class.forName("org.postgresql.Driver");
 	    	Connection conn = DriverManager.getConnection(conDB, usrDB, passwordDB);
 		
-	    	String sql = "SELECT o.area, "
+	    	String trainingSql = "SELECT o.area, "
 	    			+ "o.perimeter, o.circularity, o.compactness, "
 	    			+ "o.major, o.minor, o.eccentricity, o.hisgreypeak, "
 	    			+ "o.q1grey, o.q2grey, o.q3grey, "
@@ -259,8 +265,56 @@ public class Driver {
 	    			+ "AND i.camera = 'vis-side-1-0' "
 	    			+ "AND i.set = '3'";
 	    	
-	    	PreparedStatement ps = conn.prepareStatement(sql);
-			ResultSet trainingSet = ps.executeQuery();
+	    	String testingSql =  "SELECT o.area, "
+	    			+ "o.perimeter, o.circularity, o.compactness, "
+	    			+ "o.major, o.minor, o.eccentricity, o.hisgreypeak, "
+	    			+ "o.q1grey, o.q2grey, o.q3grey, "
+	    			+ "o.q1r, o.q2r, o.q3r, "
+	    			+ "o.q1g, o.q2g, o.q3g, "
+	    			+ "o.q1b, o.q2b, o.q3b, "
+	    			+ "CASE WHEN ( d.das <= 17 ) THEN 'Stage 1' "
+	    			+ "WHEN ( d.das > 18 AND d.das <= 25 ) THEN 'Stage 2' "
+	    			+ "WHEN ( d.das > 25 AND d.das <= 32 ) THEN 'Stage 3' "
+	    			+ "WHEN ( d.das > 32 AND d.das <= 39 ) THEN 'Stage 4' "
+	    			+ "WHEN ( d.das > 39 AND d.das <= 46 ) THEN 'Stage 5' "
+	    			+ "ELSE 'Stage 6' END Stage "
+	    			+ "FROM imageev AS i, imgobjectev AS o, soyidentification AS s, dasplusev AS d "
+	    			+ "WHERE i.assayid = o.assayid "
+	    			+ "AND i.imgid = o.imgid "
+	    			+ "AND s.barcode = ( CAST( i.barcode AS INTEGER ) ) "
+	    			+ "AND i.assayid = d.assayid "
+	    			+ "AND i.fdate = d.fdate "
+	    			+ "AND i.set = d.set "
+	    			+ "AND ( s.line = 1 OR s.line = 2 OR s.line = 3 ) "
+	    			+ "AND i.camera = 'vis-side-1-0' "
+	    			+ "AND i.set = '2' "
+	    			+ "AND d.das < 40 UNION "
+	    			+ "SELECT o.area, o.perimeter, o.circularity, "
+	    			+ "o.compactness, o.major, o.minor, o.eccentricity, o.hisgreypeak, "
+	    			+ "o.q1grey, o.q2grey, o.q3grey, "
+	    			+ "o.q1r, o.q2r, o.q3r,"
+	    			+ " o.q1g, o.q2g, o.q3g, "
+	    			+ "o.q1b, o.q2b, o.q3b,     "
+	    			+ "CASE WHEN ( d.das <= 17 ) THEN 'Stage 1' "
+	    			+ "WHEN ( d.das > 18 AND d.das <= 25 ) THEN 'Stage 2' "
+	    			+ "WHEN ( d.das > 25 AND d.das <= 32 ) THEN 'Stage 3' "
+	    			+ "WHEN ( d.das > 32 AND d.das <= 39 ) THEN 'Stage 4' "
+	    			+ "WHEN ( d.das > 39 AND d.das <= 46 ) THEN 'Stage 5' "
+	    			+ "ELSE 'Stage 6' END Stage "
+	    			+ "FROM imageev AS i, imgobjectev AS o, soyidentification AS s, dasplusev AS d "
+	    			+ "WHERE i.assayid = o.assayid "
+	    			+ "AND i.imgid = o.imgid "
+	    			+ "AND s.barcode = ( CAST( i.barcode AS INTEGER ) ) "
+	    			+ "AND i.assayid = d.assayid "
+	    			+ "AND i.fdate = d.fdate "
+	    			+ "AND i.set = d.set "
+	    			+ "AND (s.line = 2 OR s.line = 3 ) "
+	    			+ "AND i.camera = 'vis-side-1-0' "
+	    			+ "AND i.set = '3' "
+	    			+ "AND d.das < 40";
+	    	
+	    	PreparedStatement trainingPs = conn.prepareStatement(trainingSql);
+			ResultSet trainingSet = trainingPs.executeQuery();
 			while(trainingSet.next()) {
 				Double area = trainingSet.getDouble("area");
 				Double perimeter = trainingSet.getDouble("perimeter");
@@ -284,12 +338,45 @@ public class Driver {
 				Double q3b = trainingSet.getDouble("q3b");
 				String stage = trainingSet.getString("Stage");
 				
-				pw.write(area + ", " + perimeter + ", " + circularity + ", " + compactness + ", " + major + ", " + minor + ", " + eccentricity
+				trainingPw.write(area + ", " + perimeter + ", " + circularity + ", " + compactness + ", " + major + ", " + minor + ", " + eccentricity
 						+ ", " + hisgreypeak + ", " + q1grey + ", " + q2grey + ", " + q3grey + ", " + q1r + ", " + q2r + ", " + q3r
 						+ ", " + q1g + ", " + q2g + ", " + q3g + ", " + q1b + ", " + q2b + ", " + q3b + "," + "'" + stage + "'" + "\n");
 			}
-			pw.close();
 			trainingSet.close();
+			trainingPw.close();
+			
+			PreparedStatement  testingPs = conn.prepareStatement(testingSql);
+			ResultSet testingSet = testingPs.executeQuery();
+			while(testingSet.next()) {
+				Double area = testingSet.getDouble("area");
+				Double perimeter = testingSet.getDouble("perimeter");
+				Double circularity = testingSet.getDouble("circularity");
+				Double compactness = testingSet.getDouble("compactness");
+				Double major = testingSet.getDouble("major");
+				Double minor = testingSet.getDouble("minor");
+				Double eccentricity = testingSet.getDouble("eccentricity");
+				Double hisgreypeak = testingSet.getDouble("hisgreypeak");
+				Double q1grey = testingSet.getDouble("q1grey");
+				Double q2grey = testingSet.getDouble("q2grey");
+				Double q3grey = testingSet.getDouble("q3grey");
+				Double q1r = testingSet.getDouble("q1r");
+				Double q2r = testingSet.getDouble("q2r");
+				Double q3r = testingSet.getDouble("q3r");
+				Double q1g = testingSet.getDouble("q1g");
+				Double q2g = testingSet.getDouble("q2g");
+				Double q3g = testingSet.getDouble("q3g");
+				Double q1b = testingSet.getDouble("q1b");
+				Double q2b = testingSet.getDouble("q2b");
+				Double q3b = testingSet.getDouble("q3b");
+				String stage = testingSet.getString("Stage");
+				
+				testingPw.write(area + ", " + perimeter + ", " + circularity + ", " + compactness + ", " + major + ", " + minor + ", " + eccentricity
+						+ ", " + hisgreypeak + ", " + q1grey + ", " + q2grey + ", " + q3grey + ", " + q1r + ", " + q2r + ", " + q3r
+						+ ", " + q1g + ", " + q2g + ", " + q3g + ", " + q1b + ", " + q2b + ", " + q3b + "," + "'" + stage + "'" + "\n");
+			}
+			testingSet.close();
+			testingPw.close();
+			
 			conn.close();
 		} 
 	    catch (ClassNotFoundException e) {
