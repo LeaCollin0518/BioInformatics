@@ -27,8 +27,8 @@ public class Driver {
 		
 		//make these strings be taken in as program arguments
 		
-		//String trainingFile = args[0];
-		String trainingFile = "/home/leac/Documents/U4/Comp401/output/databasetraining.arff";
+		String trainingFile = args[0];
+		//String trainingFile = "/home/leac/Documents/U4/Comp401/output/databasetraining.arff";
 		
 		String testingFile = args[1];
 		
@@ -229,21 +229,20 @@ public class Driver {
         "@attribute q1grey numeric" + "\n" + "@attribute q2grey numeric" + "\n" + "@attribute q3grey numeric" + "\n" + 
         "@attribute q1r numeric" + "\n" + "@attribute q2r numeric" + "\n" + "@attribute q3r numeric" + "\n" + "@attribute q1g numeric" + "\n" + 
         "@attribute q2g numeric" + "\n" + "@attribute q3g numeric" + "\n" + "@attribute q1b numeric" + "\n" + "@attribute q2b numeric" + "\n" + 
-        "@attribute q3b numeric" + "\n" +  "@attribute Stage {'Stage 3','Stage 1','Stage 2','Stage 4', 'Stage 5'}" + "\n" + "\n" + "@data" + "\n");
+        "@attribute q3b numeric" + "\n" +  "@attribute Stage {'Stage 1','Stage 2','Stage 3','Stage 4', 'Stage 5'}" + "\n" + "\n" + "@data" + "\n");
         
         pw.write(sb.toString());
 	    try {
 	    	Class.forName("org.postgresql.Driver");
 	    	Connection conn = DriverManager.getConnection(conDB, usrDB, passwordDB);
 		
-	    	String sql = "SELECT i.camera, i.fdate, o.area, "
+	    	String sql = "SELECT o.area, "
 	    			+ "o.perimeter, o.circularity, o.compactness, "
 	    			+ "o.major, o.minor, o.eccentricity, o.hisgreypeak, "
 	    			+ "o.q1grey, o.q2grey, o.q3grey, "
 	    			+ "o.q1r, o.q2r, o.q3r, "
 	    			+ "o.q1g, o.q2g, o.q3g, "
 	    			+ "o.q1b, o.q2b, o.q3b, "
-	    			+ "s.growthcond, d.das, "
 	    			+ "CASE WHEN ( d.das <= 17 ) THEN 'Stage 1' "
 	    			+ "WHEN ( d.das > 18 AND d.das <= 25 ) THEN 'Stage 2' "
 	    			+ "WHEN ( d.das > 25 AND d.das <= 32 ) THEN 'Stage 3' "
