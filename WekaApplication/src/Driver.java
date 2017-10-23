@@ -5,6 +5,7 @@ import weka.core.Instance;
 import weka.core.Instances;
 import weka.classifiers.Classifier;
 import weka.classifiers.AbstractClassifier;
+import weka.classifiers.meta.FilteredClassifier;
 import weka.core.converters.ArffLoader;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.Remove;
@@ -34,13 +35,8 @@ public class Driver {
 		connectToDatabase(dbUsr, dbPwd, dbConfig, trainingFile, testingFile);
 		
 		//reading the files and getting all the instances of each one
-		Instances train = fileReader(trainingFile);
-		Instances test = fileReader(testingFile);
-		
-		String [] attributesToRemove = {"barcode", "das"};
-		
-		Instances instancesTrain = removeAttribute(train,attributesToRemove);
-		Instances instancesTest = removeAttribute(test, attributesToRemove);
+		Instances instancesTrain = fileReader(trainingFile);
+		Instances instancesTest = fileReader(testingFile);
 		
 		String reduce = "no";
 		
@@ -62,6 +58,9 @@ public class Driver {
 		//what attribute do we want to predict
 		String classAttribute = "Stage";
 		
+		String [] attributesToRemove = {"barcode", "das"};
+		String indicesToRemove = removeAttribute(instancesTrain, attributesToRemove);
+		
 		String [] classifiers = {"ZeroR", "J48", "RandomTree", "RandomForest", "NaiveBayes"};
 		
 		//need to keep track of the precision of different algorithms
@@ -72,7 +71,7 @@ public class Driver {
 		//running each different classifier, population HashMap to store each precision value
 		for(int i = 0; i < classifiers.length; i++) {
 			String toTest = classifiers[i];
-			precisionVals.put(toTest, predict(instancesTrain, instancesTest, toTest, null, classAttribute, outputDir));
+			precisionVals.put(toTest, predict(instancesTrain, instancesTest, toTest, indicesToRemove, classAttribute, outputDir));
 		}
 		
 		for(HashMap.Entry <String, Double> entry : precisionVals.entrySet()) {
@@ -98,7 +97,7 @@ public class Driver {
 		
 	}
 	
-	public static Instances removeAttribute(Instances data, String [] attributes) throws Exception{
+	public static String removeAttribute(Instances data, String [] attributes) throws Exception{
 		
 		String [] options = new String[2];
 		options[0] = "-R";
@@ -113,18 +112,11 @@ public class Driver {
 			}
 		}
 		
-		options[1] = indices;
-		
-		Remove remove = new Remove();
-		remove.setOptions(options);
-		remove.setInputFormat(data);
-		Instances newData = Filter.useFilter(data, remove);
-		
-		return newData;
+		return indices;
 	}
 	
 	public static Double predict(Instances train, Instances test, String classifierName, 
-		String [] options, String classAttribute, String outputDir) throws Exception {
+		String indicesToRemove, String classAttribute, String outputDir) throws Exception {
 		
 		//set the Class (what we want to predict)
 		test.setClass(test.attribute(classAttribute));
@@ -134,10 +126,17 @@ public class Driver {
 		
 		double numInst = test.numInstances(), correct = 0.0f;
 		
-		Classifier m_classifier = AbstractClassifier.forName(classifierName, options);
+		Classifier m_classifier = AbstractClassifier.forName(classifierName, null);
+		
+		Remove rm = new Remove();
+		rm.setAttributeIndices(indicesToRemove);
+		
+		FilteredClassifier fc = new FilteredClassifier();
+		fc.setFilter(rm);
+		fc.setClassifier(m_classifier);
 		
 		//building the model
-		m_classifier.buildClassifier(train);
+		fc.buildClassifier(train);
 		
 		
 		String outputFile = outputDir + classifierName + "Predicted.csv";
@@ -146,7 +145,7 @@ public class Driver {
 		File output = new File(outputFile);
 		PrintWriter pw = new PrintWriter(output);
         StringBuilder sb = new StringBuilder();
-        sb.append("Instance");
+        sb.append("Barcode");
         sb.append(',');
         sb.append("Actual");
         sb.append(',');
@@ -163,7 +162,7 @@ public class Driver {
 			String actualVal = current.stringValue(test.classIndex());
 			
 			//getting the predicted value of the class attribute of this instance
-			double predicted = m_classifier.classifyInstance(test.instance(i));
+			double predicted = fc.classifyInstance(test.instance(i));
 			
 			//setting this value to the temp class attribute
 			temp.setValue(test.classIndex(), predicted);
