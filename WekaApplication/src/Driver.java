@@ -6,6 +6,8 @@ import weka.core.Instances;
 import weka.classifiers.Classifier;
 import weka.classifiers.AbstractClassifier;
 import weka.core.converters.ArffLoader;
+import weka.filters.Filter;
+import weka.filters.unsupervised.attribute.Remove;
 import weka.attributeSelection.*;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -18,24 +20,27 @@ public class Driver {
 	
 	public static void main(String [] args) throws Exception {
 		
-		String dbUsr = args[3];
-		String dbPwd = args[4];
-		String dbConfig = args[5];
-		
-		connectToDatabase(dbUsr, dbPwd, dbConfig);
-		
+		String dbUsr = args[1];
+		String dbPwd = args[2];
+		String dbConfig = args[3];
 		
 		//make these strings be taken in as program arguments
 		
-		String trainingFile = args[0];
+		String outputDir = args[0];
 		
-		String testingFile = args[1];
+		String trainingFile = outputDir + "DatabaseTraining.arff";
+		String testingFile = outputDir + "DatabaseTesting.arff";
 		
-		String outputDir = args[2];
+		connectToDatabase(dbUsr, dbPwd, dbConfig, trainingFile, testingFile);
 		
 		//reading the files and getting all the instances of each one
-		Instances instancesTrain = fileReader(trainingFile);
-		Instances instancesTest = fileReader(testingFile);
+		Instances train = fileReader(trainingFile);
+		Instances test = fileReader(testingFile);
+		
+		String [] attributesToRemove = {"barcode", "das"};
+		
+		Instances instancesTrain = removeAttribute(train,attributesToRemove);
+		Instances instancesTest = removeAttribute(test, attributesToRemove);
 		
 		String reduce = "no";
 		
@@ -57,8 +62,6 @@ public class Driver {
 		//what attribute do we want to predict
 		String classAttribute = "Stage";
 		
-		String [] options = null;
-		
 		String [] classifiers = {"ZeroR", "J48", "RandomTree", "RandomForest", "NaiveBayes"};
 		
 		//need to keep track of the precision of different algorithms
@@ -69,7 +72,7 @@ public class Driver {
 		//running each different classifier, population HashMap to store each precision value
 		for(int i = 0; i < classifiers.length; i++) {
 			String toTest = classifiers[i];
-			precisionVals.put(toTest, predict(instancesTrain, instancesTest, toTest, options, classAttribute, outputDir));
+			precisionVals.put(toTest, predict(instancesTrain, instancesTest, toTest, null, classAttribute, outputDir));
 		}
 		
 		for(HashMap.Entry <String, Double> entry : precisionVals.entrySet()) {
@@ -93,6 +96,31 @@ public class Driver {
 		
 		return data;
 		
+	}
+	
+	public static Instances removeAttribute(Instances data, String [] attributes) throws Exception{
+		
+		String [] options = new String[2];
+		options[0] = "-R";
+		
+		String indices = "";
+		
+		for(int i = 0; i < attributes.length; i++) {
+			int index = (data.attribute(attributes[i])).index() + 1;
+			indices += index;
+			if(i != attributes.length-1) {
+				indices += ",";
+			}
+		}
+		
+		options[1] = indices;
+		
+		Remove remove = new Remove();
+		remove.setOptions(options);
+		remove.setInputFormat(data);
+		Instances newData = Filter.useFilter(data, remove);
+		
+		return newData;
 	}
 	
 	public static Double predict(Instances train, Instances test, String classifierName, 
@@ -218,22 +246,22 @@ public class Driver {
 		return reduced;
 	}
 	
-	private static void connectToDatabase(String usrDB, String passwordDB, String conDB) throws SQLException, FileNotFoundException {
+	private static void connectToDatabase(String usrDB, String passwordDB, String conDB, String trainingFile, String testingFile) throws SQLException, FileNotFoundException {
 		
-		File trainingOutput = new File("/home/leac/Documents/U4/Comp401/output/DatabaseTraining.arff");
+		File trainingOutput = new File(trainingFile);
 		PrintWriter trainingPw = new PrintWriter(trainingOutput);
         StringBuilder sb = new StringBuilder();
         
-        File testingOutput = new File("/home/leac/Documents/U4/Comp401/output/DatabaseTesting.arff");
+        File testingOutput = new File(testingFile);
         PrintWriter testingPw = new PrintWriter(testingOutput);
         
-        sb.append("@relation databasetraining" + "\n" +  "\n" + "@attribute area numeric" + "\n" + "@attribute perimeter numeric" + "\n" + 
+        sb.append("@relation databasetraining" + "\n" +  "\n" + "@attribute barcode numeric"  + "\n" + "@attribute area numeric" + "\n" + "@attribute perimeter numeric" + "\n" + 
         "@attribute circularity numeric" + "\n" + "@attribute compactness numeric" + "\n" + "@attribute major numeric" + "\n" + 
         "@attribute minor numeric" + "\n" + "@attribute eccentricity numeric" + "\n" + "@attribute hisgreypeak numeric" + "\n" + 
         "@attribute q1grey numeric" + "\n" + "@attribute q2grey numeric" + "\n" + "@attribute q3grey numeric" + "\n" + 
         "@attribute q1r numeric" + "\n" + "@attribute q2r numeric" + "\n" + "@attribute q3r numeric" + "\n" + "@attribute q1g numeric" + "\n" + 
         "@attribute q2g numeric" + "\n" + "@attribute q3g numeric" + "\n" + "@attribute q1b numeric" + "\n" + "@attribute q2b numeric" + "\n" + 
-        "@attribute q3b numeric" + "\n" +  "@attribute Stage {'Stage 1','Stage 2','Stage 3','Stage 4', 'Stage 5'}" + "\n" + "\n" + "@data" + "\n");
+        "@attribute q3b numeric" + "\n" + "@attribute das numeric" + "\n" +"@attribute Stage {'Stage 1','Stage 2','Stage 3','Stage 4', 'Stage 5'}" + "\n" + "\n" + "@data" + "\n");
         
         trainingPw.write(sb.toString());
         testingPw.write(sb.toString());
@@ -242,13 +270,13 @@ public class Driver {
 	    	Class.forName("org.postgresql.Driver");
 	    	Connection conn = DriverManager.getConnection(conDB, usrDB, passwordDB);
 		
-	    	String trainingSql = "SELECT o.area, "
+	    	String trainingSql = "SELECT s.barcode, o.area, "
 	    			+ "o.perimeter, o.circularity, o.compactness, "
 	    			+ "o.major, o.minor, o.eccentricity, o.hisgreypeak, "
 	    			+ "o.q1grey, o.q2grey, o.q3grey, "
 	    			+ "o.q1r, o.q2r, o.q3r, "
 	    			+ "o.q1g, o.q2g, o.q3g, "
-	    			+ "o.q1b, o.q2b, o.q3b, "
+	    			+ "o.q1b, o.q2b, o.q3b, d.das, "
 	    			+ "CASE WHEN ( d.das <= 17 ) THEN 'Stage 1' "
 	    			+ "WHEN ( d.das > 18 AND d.das <= 25 ) THEN 'Stage 2' "
 	    			+ "WHEN ( d.das > 25 AND d.das <= 32 ) THEN 'Stage 3' "
@@ -265,13 +293,13 @@ public class Driver {
 	    			+ "AND i.camera = 'vis-side-1-0' "
 	    			+ "AND i.set = '3'";
 	    	
-	    	String testingSql =  "SELECT o.area, "
+	    	String testingSql =  "SELECT s.barcode, o.area, "
 	    			+ "o.perimeter, o.circularity, o.compactness, "
 	    			+ "o.major, o.minor, o.eccentricity, o.hisgreypeak, "
 	    			+ "o.q1grey, o.q2grey, o.q3grey, "
 	    			+ "o.q1r, o.q2r, o.q3r, "
 	    			+ "o.q1g, o.q2g, o.q3g, "
-	    			+ "o.q1b, o.q2b, o.q3b, "
+	    			+ "o.q1b, o.q2b, o.q3b, d.das, "
 	    			+ "CASE WHEN ( d.das <= 17 ) THEN 'Stage 1' "
 	    			+ "WHEN ( d.das > 18 AND d.das <= 25 ) THEN 'Stage 2' "
 	    			+ "WHEN ( d.das > 25 AND d.das <= 32 ) THEN 'Stage 3' "
@@ -289,12 +317,12 @@ public class Driver {
 	    			+ "AND i.camera = 'vis-side-1-0' "
 	    			+ "AND i.set = '2' "
 	    			+ "AND d.das < 40 UNION "
-	    			+ "SELECT o.area, o.perimeter, o.circularity, "
+	    			+ "SELECT s.barcode, o.area, o.perimeter, o.circularity, "
 	    			+ "o.compactness, o.major, o.minor, o.eccentricity, o.hisgreypeak, "
 	    			+ "o.q1grey, o.q2grey, o.q3grey, "
 	    			+ "o.q1r, o.q2r, o.q3r,"
 	    			+ " o.q1g, o.q2g, o.q3g, "
-	    			+ "o.q1b, o.q2b, o.q3b,     "
+	    			+ "o.q1b, o.q2b, o.q3b, d.das, "
 	    			+ "CASE WHEN ( d.das <= 17 ) THEN 'Stage 1' "
 	    			+ "WHEN ( d.das > 18 AND d.das <= 25 ) THEN 'Stage 2' "
 	    			+ "WHEN ( d.das > 25 AND d.das <= 32 ) THEN 'Stage 3' "
@@ -316,6 +344,7 @@ public class Driver {
 	    	PreparedStatement trainingPs = conn.prepareStatement(trainingSql);
 			ResultSet trainingSet = trainingPs.executeQuery();
 			while(trainingSet.next()) {
+				Integer barcode = trainingSet.getInt("barcode");
 				Double area = trainingSet.getDouble("area");
 				Double perimeter = trainingSet.getDouble("perimeter");
 				Double circularity = trainingSet.getDouble("circularity");
@@ -336,11 +365,12 @@ public class Driver {
 				Double q1b = trainingSet.getDouble("q1b");
 				Double q2b = trainingSet.getDouble("q2b");
 				Double q3b = trainingSet.getDouble("q3b");
+				Double das = trainingSet.getDouble("das");
 				String stage = trainingSet.getString("Stage");
 				
-				trainingPw.write(area + ", " + perimeter + ", " + circularity + ", " + compactness + ", " + major + ", " + minor + ", " + eccentricity
+				trainingPw.write(barcode + "," + area + ", " + perimeter + ", " + circularity + ", " + compactness + ", " + major + ", " + minor + ", " + eccentricity
 						+ ", " + hisgreypeak + ", " + q1grey + ", " + q2grey + ", " + q3grey + ", " + q1r + ", " + q2r + ", " + q3r
-						+ ", " + q1g + ", " + q2g + ", " + q3g + ", " + q1b + ", " + q2b + ", " + q3b + "," + "'" + stage + "'" + "\n");
+						+ ", " + q1g + ", " + q2g + ", " + q3g + ", " + q1b + ", " + q2b + ", " + q3b + "," + das + "," + "'" + stage + "'" + "\n");
 			}
 			trainingSet.close();
 			trainingPw.close();
@@ -348,6 +378,7 @@ public class Driver {
 			PreparedStatement  testingPs = conn.prepareStatement(testingSql);
 			ResultSet testingSet = testingPs.executeQuery();
 			while(testingSet.next()) {
+				Integer barcode = testingSet.getInt("barcode");
 				Double area = testingSet.getDouble("area");
 				Double perimeter = testingSet.getDouble("perimeter");
 				Double circularity = testingSet.getDouble("circularity");
@@ -368,11 +399,12 @@ public class Driver {
 				Double q1b = testingSet.getDouble("q1b");
 				Double q2b = testingSet.getDouble("q2b");
 				Double q3b = testingSet.getDouble("q3b");
+				Double das = testingSet.getDouble("das");
 				String stage = testingSet.getString("Stage");
 				
-				testingPw.write(area + ", " + perimeter + ", " + circularity + ", " + compactness + ", " + major + ", " + minor + ", " + eccentricity
+				testingPw.write(barcode + "," + area + ", " + perimeter + ", " + circularity + ", " + compactness + ", " + major + ", " + minor + ", " + eccentricity
 						+ ", " + hisgreypeak + ", " + q1grey + ", " + q2grey + ", " + q3grey + ", " + q1r + ", " + q2r + ", " + q3r
-						+ ", " + q1g + ", " + q2g + ", " + q3g + ", " + q1b + ", " + q2b + ", " + q3b + "," + "'" + stage + "'" + "\n");
+						+ ", " + q1g + ", " + q2g + ", " + q3g + ", " + q1b + ", " + q2b + ", " + q3b + "," + das + "," + "'" + stage + "'" + "\n");
 			}
 			testingSet.close();
 			testingPw.close();
