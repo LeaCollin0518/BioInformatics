@@ -21,13 +21,10 @@ public class Driver {
 	
 	public static void main(String [] args) throws Exception {
 		
+		String outputDir = args[0];
 		String dbUsr = args[1];
 		String dbPwd = args[2];
 		String dbConfig = args[3];
-		
-		//make these strings be taken in as program arguments
-		
-		String outputDir = args[0];
 		
 		String trainingFile = outputDir + "DatabaseTraining.arff";
 		String testingFile = outputDir + "DatabaseTesting.arff";
@@ -147,6 +144,8 @@ public class Driver {
         StringBuilder sb = new StringBuilder();
         sb.append("Barcode");
         sb.append(',');
+        sb.append("Das");
+        sb.append(",");
         sb.append("Actual");
         sb.append(',');
         sb.append("Predicted");
@@ -170,8 +169,10 @@ public class Driver {
 			//getting the string value
 			String predictedVal = temp.stringValue(temp.classIndex());
 			
-			sb.append((i+1));
+			sb.append((int) current.value(test.attribute("barcode")));
 			sb.append(',');
+			sb.append((int) current.value(test.attribute("das")));
+			sb.append(",");
 			sb.append(actualVal);
 			sb.append(',');
 			sb.append(predictedVal);
@@ -343,7 +344,7 @@ public class Driver {
 	    	PreparedStatement trainingPs = conn.prepareStatement(trainingSql);
 			ResultSet trainingSet = trainingPs.executeQuery();
 			while(trainingSet.next()) {
-				Integer barcode = trainingSet.getInt("barcode");
+				Double barcode = trainingSet.getDouble("barcode");
 				Double area = trainingSet.getDouble("area");
 				Double perimeter = trainingSet.getDouble("perimeter");
 				Double circularity = trainingSet.getDouble("circularity");
@@ -377,7 +378,7 @@ public class Driver {
 			PreparedStatement  testingPs = conn.prepareStatement(testingSql);
 			ResultSet testingSet = testingPs.executeQuery();
 			while(testingSet.next()) {
-				Integer barcode = testingSet.getInt("barcode");
+				Double barcode = testingSet.getDouble("barcode");
 				Double area = testingSet.getDouble("area");
 				Double perimeter = testingSet.getDouble("perimeter");
 				Double circularity = testingSet.getDouble("circularity");
