@@ -7,7 +7,6 @@ import weka.classifiers.Classifier;
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.meta.FilteredClassifier;
 import weka.core.converters.ArffLoader;
-import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.Remove;
 import weka.attributeSelection.*;
 import java.io.File;
@@ -21,14 +20,17 @@ public class Driver {
 	
 	public static void main(String [] args) throws Exception {
 		
+		//some of these will later be taken in as arguments inputted directly by the user
 		String outputDir = args[0];
 		String dbUsr = args[1];
 		String dbPwd = args[2];
 		String dbConfig = args[3];
 		
+		//these will be the ARFF files that the program writes to from the database and then reads from 
 		String trainingFile = outputDir + "DatabaseTraining.arff";
 		String testingFile = outputDir + "DatabaseTesting.arff";
 		
+		//function call to connect to database and create training and testing files
 		connectToDatabase(dbUsr, dbPwd, dbConfig, trainingFile, testingFile);
 		
 		//reading the files and getting all the instances of each one
@@ -36,6 +38,7 @@ public class Driver {
 		Instances instancesTest = fileReader(testingFile);
 		
 		
+		//optional 'filtering' methods, don't know if I will keep 
 		String reduce = "no";
 		
 		if(reduce.equals("yes")){
@@ -56,9 +59,12 @@ public class Driver {
 		//what attribute do we want to predict
 		String classAttribute = "Stage";
 		
+		//these are the attributes to not be included in the classifier, das is a giveaway of the stage, barcode is irrelevant
 		String [] attributesToRemove = {"barcode", "das"};
+		//returns the indices of the attributes to be ignored
 		String indicesToRemove = removeAttribute(instancesTrain, attributesToRemove);
 		
+		//the different classifiers to try, again will probably be taken in as program arguments
 		String [] classifiers = {"ZeroR", "J48", "RandomTree", "RandomForest", "NaiveBayes"};
 		
 		//need to keep track of the precision of different algorithms
@@ -83,6 +89,7 @@ public class Driver {
 		System.out.println("Best Method: " + bestMethod + ", Precision: " + maxPrecision);
 	}
 		
+	//simple method to read ARFF file
 	public static Instances fileReader(String input) throws IOException {
 
 		File inputFile = new File(input);
@@ -94,13 +101,16 @@ public class Driver {
 		
 	}
 	
+	//returns the indices of the attributes that will be ignored by the classifier
 	public static String removeAttribute(Instances data, String [] attributes) throws Exception{
 		
+		//-R is the remove option
 		String [] options = new String[2];
 		options[0] = "-R";
 		
 		String indices = "";
 		
+		//indexing in WEKA starts at 1 not 0
 		for(int i = 0; i < attributes.length; i++) {
 			int index = (data.attribute(attributes[i])).index() + 1;
 			indices += index;
@@ -123,11 +133,14 @@ public class Driver {
 		
 		double numInst = test.numInstances(), correct = 0.0f;
 		
+		//creating a classifier based on just the name
 		Classifier m_classifier = AbstractClassifier.forName(classifierName, null);
 		
+		//removing the attributes we don't want classifier to know about
 		Remove rm = new Remove();
 		rm.setAttributeIndices(indicesToRemove);
 		
+		//making a filtered version of classifier
 		FilteredClassifier fc = new FilteredClassifier();
 		fc.setFilter(rm);
 		fc.setClassifier(m_classifier);
@@ -194,6 +207,7 @@ public class Driver {
         return precision;
 	}
 	
+	//still don't know if this is necessary
 	public static Instances [] attributeSelector(Instances train, Instances test, String evaluator) throws Exception {
 		
 		AttributeSelection selector = new AttributeSelection();
@@ -246,6 +260,7 @@ public class Driver {
 		return reduced;
 	}
 	
+	//method to connect to database, write training and testing data queries, write the results of query to different ARFF files to be read later
 	private static void connectToDatabase(String usrDB, String passwordDB, String conDB, String trainingFile, String testingFile) throws SQLException, FileNotFoundException {
 		
 		File trainingOutput = new File(trainingFile);
