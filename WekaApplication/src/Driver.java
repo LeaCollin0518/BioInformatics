@@ -76,9 +76,7 @@ public class Driver {
 		}
 		System.out.println();
 		System.out.println("Best Algorithm: " + bestMethod + " with precision: " + max);
-	
 
-	System.out.println("Hello");	
 	}
 	public static Instances fileReader(String input) throws IOException {
 
