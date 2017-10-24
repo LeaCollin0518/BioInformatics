@@ -66,7 +66,7 @@ public class Driver {
 		String bestMethod = "";
 		
 		//running each different classifier, population HashMap to store each precision value
-		for(int i = 0; i < classifiers.length; i++) {
+		/*for(int i = 0; i < classifiers.length; i++) {
 			String toTest = classifiers[i];
 			precisionVals.put(toTest, predict(instancesTrain, instancesTest, toTest, indicesToRemove, classAttribute, outputDir));
 		}
@@ -79,7 +79,9 @@ public class Driver {
 			}
 		}
 		
-		System.out.println("Best Method: " + bestMethod + ", Precision: " + maxPrecision);
+		System.out.println("Best Method: " + bestMethod + ", Precision: " + maxPrecision);*/
+		
+		predict(instancesTrain, instancesTest, classifiers, indicesToRemove, classAttribute, outputDir);
 		
 	}
 		
@@ -112,7 +114,7 @@ public class Driver {
 		return indices;
 	}
 	
-	public static Double predict(Instances train, Instances test, String classifierName, 
+	public static Double predict(Instances train, Instances test, String [] classifierNames, 
 		String indicesToRemove, String classAttribute, String outputDir) throws Exception {
 		
 		//set the Class (what we want to predict)
@@ -121,22 +123,31 @@ public class Driver {
 		//setting the train class index to be the same as the testing class index
 		train.setClassIndex(test.classIndex());
 		
-		double numInst = test.numInstances(), correct = 0.0f;
+		double numInst = test.numInstances();
 		
-		Classifier m_classifier = AbstractClassifier.forName(classifierName, null);
+		//going to make an array of classifiers
+		Classifier [] classifiers = new Classifier [classifierNames.length];
 		
+		//removing attributes we don't want to include such as das and barcode 
 		Remove rm = new Remove();
 		rm.setAttributeIndices(indicesToRemove);
 		
-		FilteredClassifier fc = new FilteredClassifier();
-		fc.setFilter(rm);
-		fc.setClassifier(m_classifier);
+		for(int i = 0; i < classifiers.length; i++) {
+			Classifier temp = AbstractClassifier.forName(classifierNames[i], null);
+			
+			FilteredClassifier fc = new FilteredClassifier();
+			fc.setFilter(rm);
+			fc.setClassifier(temp);
+			
+			classifiers[i] = fc;
+		}
 		
-		//building the model
-		fc.buildClassifier(train);
+		//building the models for each classifier
+		for(int i = 0; i < classifiers.length; i++) {
+			classifiers[i].buildClassifier(train);
+		}
 		
-		
-		String outputFile = outputDir + classifierName + "Predicted.csv";
+		String outputFile = outputDir + "Predicted.csv";
 		
 		//writing the header to the output csv
 		File output = new File(outputFile);
@@ -148,50 +159,59 @@ public class Driver {
         sb.append(",");
         sb.append("Actual");
         sb.append(',');
-        sb.append("Predicted");
-        sb.append('\n');
+        for(int i = 0; i < classifierNames.length; i++) {
+        	sb.append(classifierNames[i]);
+        	if(i != classifierNames.length - 1) {
+        		sb.append(",");
+        	}
+        }
+        sb.append("\n");
 		
-		for(int i = 0; i < numInst; i++){
-			
-			Instance current = test.instance(i);
+    	for(int i = 0; i < numInst; i++){
+    		
+    		Instance current = test.instance(i);
 			
 			Instance temp = (Instance)current.copy();
 			
 			//attributes are given as array positions, getting the string value
 			String actualVal = current.stringValue(test.classIndex());
-			
+    		
+    		sb.append((int) current.value(test.attribute("barcode")));
+			sb.append(',');
+			sb.append((int) current.value(test.attribute("das")));
+			sb.append(",");
+			sb.append(actualVal);
+			sb.append(',');
+    		
+	       for(int j = 0; j < classifiers.length; j++) {
 			//getting the predicted value of the class attribute of this instance
-			double predicted = fc.classifyInstance(test.instance(i));
+			double predicted = classifiers[j].classifyInstance(test.instance(i));
 			
 			//setting this value to the temp class attribute
 			temp.setValue(test.classIndex(), predicted);
 			
 			//getting the string value
 			String predictedVal = temp.stringValue(temp.classIndex());
-			
-			sb.append((int) current.value(test.attribute("barcode")));
-			sb.append(',');
-			sb.append((int) current.value(test.attribute("das")));
-			sb.append(",");
-			sb.append(actualVal);
-			sb.append(',');
 			sb.append(predictedVal);
-			sb.append('\n');
 			
-			
-			if(predictedVal.equals(actualVal)) {
-		
-				correct++;
+			if(j != classifiers.length - 1) {
+				sb.append(",");
 			}
-		}
+			
+			else if( j == classifiers.length - 1) {
+				sb.append('\n');
+			}
+			
+	       }
+    	}
 		
 		sb.append('\n');
 		pw.write(sb.toString());
         pw.close();
         
-        Double precision = 100*correct/numInst;
         
-        return precision;
+        
+        return null;
 	}
 	
 	public static Instances [] attributeSelector(Instances train, Instances test, String evaluator) throws Exception {
