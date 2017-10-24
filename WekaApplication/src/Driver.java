@@ -7,14 +7,12 @@ import weka.classifiers.Classifier;
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.meta.FilteredClassifier;
 import weka.core.converters.ArffLoader;
-import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.Remove;
 import weka.attributeSelection.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.IOException;
-import java.util.HashMap;
 import java.sql.*;
 
 public class Driver {
@@ -55,33 +53,28 @@ public class Driver {
 		//what attribute do we want to predict
 		String classAttribute = "Stage";
 		
-		String [] attributesToRemove = {"barcode", "das"};
+		String [] attributesToRemove = {};
 		String indicesToRemove = removeAttribute(instancesTrain, attributesToRemove);
 		
+		//these will be all the different classifiers that are tested, will be taken as program inputs
 		String [] classifiers = {"ZeroR", "J48", "RandomTree", "RandomForest", "NaiveBayes"};
 		
-		//need to keep track of the precision of different algorithms
-		HashMap <String, Double> precisionVals = new HashMap <String, Double>();
-		double maxPrecision = 0.0;
+		//will be used to store the highest precision and most precise classifier name
+		Double max = 0.0;
 		String bestMethod = "";
 		
-		//running each different classifier, population HashMap to store each precision value
-		/*for(int i = 0; i < classifiers.length; i++) {
-			String toTest = classifiers[i];
-			precisionVals.put(toTest, predict(instancesTrain, instancesTest, toTest, indicesToRemove, classAttribute, outputDir));
-		}
-		
-		for(HashMap.Entry <String, Double> entry : precisionVals.entrySet()) {
+		//run all the different classifiers
+		Double [] precisions = predict(instancesTrain, instancesTest, classifiers, indicesToRemove, classAttribute, outputDir);
+		for(int i = 0; i < classifiers.length; i++) {
+			System.out.println("Algorithm: " + classifiers[i] + ", Precision: " + precisions[i]);
 			
-			if(entry.getValue() > maxPrecision) {
-				maxPrecision = entry.getValue();
-				bestMethod = entry.getKey();
+			if(precisions[i] > max) {
+				max = precisions[i];
+				bestMethod = classifiers[i];
 			}
 		}
-		
-		System.out.println("Best Method: " + bestMethod + ", Precision: " + maxPrecision);*/
-		
-		predict(instancesTrain, instancesTest, classifiers, indicesToRemove, classAttribute, outputDir);
+		System.out.println();
+		System.out.println("Best Algorithm: " + bestMethod + " with precision: " + max);
 		
 	}
 		
@@ -114,7 +107,7 @@ public class Driver {
 		return indices;
 	}
 	
-	public static Double predict(Instances train, Instances test, String [] classifierNames, 
+	public static Double [] predict(Instances train, Instances test, String [] classifierNames, 
 		String indicesToRemove, String classAttribute, String outputDir) throws Exception {
 		
 		//set the Class (what we want to predict)
@@ -123,15 +116,20 @@ public class Driver {
 		//setting the train class index to be the same as the testing class index
 		train.setClassIndex(test.classIndex());
 		
-		double numInst = test.numInstances();
-		
 		//going to make an array of classifiers
 		Classifier [] classifiers = new Classifier [classifierNames.length];
+		
+		//need somewhere to store the precision of each classifier + initializing the array
+		Double precision [] = new Double [classifiers.length];
+		for(int i = 0; i < precision.length; i++) {
+			precision[i] = 0.0;
+		}
 		
 		//removing attributes we don't want to include such as das and barcode 
 		Remove rm = new Remove();
 		rm.setAttributeIndices(indicesToRemove);
 		
+		//creating filtered versions of each classifier (removing das and barcode)
 		for(int i = 0; i < classifiers.length; i++) {
 			Classifier temp = AbstractClassifier.forName(classifierNames[i], null);
 			
@@ -159,6 +157,8 @@ public class Driver {
         sb.append(",");
         sb.append("Actual");
         sb.append(',');
+        
+        //making the names of the classifiers part of the header, will indicate the stage that classifier has predicted for a particular plant
         for(int i = 0; i < classifierNames.length; i++) {
         	sb.append(classifierNames[i]);
         	if(i != classifierNames.length - 1) {
@@ -167,10 +167,14 @@ public class Driver {
         }
         sb.append("\n");
 		
+        double numInst = test.numInstances();
+        
+        //actually running the classifier
     	for(int i = 0; i < numInst; i++){
     		
     		Instance current = test.instance(i);
 			
+    		//will set the Stage of this 'temp' instance to be the predicted value to then compare it to the actual value of 'current'
 			Instance temp = (Instance)current.copy();
 			
 			//attributes are given as array positions, getting the string value
@@ -192,6 +196,12 @@ public class Driver {
 			
 			//getting the string value
 			String predictedVal = temp.stringValue(temp.classIndex());
+			
+			//comparing predicted with actual value
+			if(predictedVal.equals(actualVal)) {
+				precision[j]++;
+			}
+			
 			sb.append(predictedVal);
 			
 			if(j != classifiers.length - 1) {
@@ -201,72 +211,23 @@ public class Driver {
 			else if( j == classifiers.length - 1) {
 				sb.append('\n');
 			}
-			
-	       }
+				
+		   }
+    	}
+    	
+    	for(int i = 0; i < precision.length; i++) {
+    		precision[i] = 100*precision[i]/numInst;
     	}
 		
 		sb.append('\n');
 		pw.write(sb.toString());
         pw.close();
         
-        
-        
-        return null;
+        return precision;
 	}
-	
-	public static Instances [] attributeSelector(Instances train, Instances test, String evaluator) throws Exception {
 		
-		AttributeSelection selector = new AttributeSelection();
-		
-		if (evaluator.equals("cfs")) {
-			CfsSubsetEval eval = new CfsSubsetEval();
-			BestFirst search = new BestFirst();
-			selector.setEvaluator(eval);
-			selector.setSearch(search);
-		}
-		else if(evaluator.equals("corr")) {
-			CorrelationAttributeEval eval = new CorrelationAttributeEval();
-	        Ranker search = new Ranker();
-	        selector.setEvaluator(eval);
-			selector.setSearch(search);
-		}
-		else if(evaluator.equals("oner")) {
-			OneRAttributeEval eval = new OneRAttributeEval();
-	        Ranker search = new Ranker();
-	        selector.setEvaluator(eval);
-			selector.setSearch(search);
-		}
-		/*need to fix this
-		 * else if(evaluator.equals("principal")) {
-			PrincipalComponents eval = new PrincipalComponents();
-	        Ranker search = new Ranker();
-	        selector.setEvaluator(eval);
-			selector.setSearch(search);
-		}*/
-		else if(evaluator.equals("relief")) {
-			ReliefFAttributeEval eval = new ReliefFAttributeEval();
-	        Ranker search = new Ranker();
-	        selector.setEvaluator(eval);
-			selector.setSearch(search);
-		}
-		
-        
-		selector.SelectAttributes(train);
-		
-		//rankedAttributes gives the ranking of the attributes along with their weights
-		//selected Attributes just gives the order of the ranking
-
-		
-		Instances trainTemp = selector.reduceDimensionality(train);
-		Instances trainTest = selector.reduceDimensionality(test);
-		
-		
-		Instances [] reduced = {trainTemp, trainTest};
-
-		return reduced;
-	}
-	
-	private static void connectToDatabase(String usrDB, String passwordDB, String conDB, String trainingFile, String testingFile) throws SQLException, FileNotFoundException {
+	private static void connectToDatabase(String usrDB, String passwordDB, String conDB, 
+			String trainingFile, String testingFile) throws SQLException, FileNotFoundException {
 		
 		File trainingOutput = new File(trainingFile);
 		PrintWriter trainingPw = new PrintWriter(trainingOutput);
@@ -438,5 +399,57 @@ public class Driver {
 			return;
 
 		}
-	}	
+	}
+	
+	public static Instances [] attributeSelector(Instances train, Instances test, String evaluator) throws Exception {
+		
+		AttributeSelection selector = new AttributeSelection();
+		
+		if (evaluator.equals("cfs")) {
+			CfsSubsetEval eval = new CfsSubsetEval();
+			BestFirst search = new BestFirst();
+			selector.setEvaluator(eval);
+			selector.setSearch(search);
+		}
+		else if(evaluator.equals("corr")) {
+			CorrelationAttributeEval eval = new CorrelationAttributeEval();
+	        Ranker search = new Ranker();
+	        selector.setEvaluator(eval);
+			selector.setSearch(search);
+		}
+		else if(evaluator.equals("oner")) {
+			OneRAttributeEval eval = new OneRAttributeEval();
+	        Ranker search = new Ranker();
+	        selector.setEvaluator(eval);
+			selector.setSearch(search);
+		}
+		/*need to fix this
+		 * else if(evaluator.equals("principal")) {
+			PrincipalComponents eval = new PrincipalComponents();
+	        Ranker search = new Ranker();
+	        selector.setEvaluator(eval);
+			selector.setSearch(search);
+		}*/
+		else if(evaluator.equals("relief")) {
+			ReliefFAttributeEval eval = new ReliefFAttributeEval();
+	        Ranker search = new Ranker();
+	        selector.setEvaluator(eval);
+			selector.setSearch(search);
+		}
+		
+        
+		selector.SelectAttributes(train);
+		
+		//rankedAttributes gives the ranking of the attributes along with their weights
+		//selected Attributes just gives the order of the ranking
+
+		
+		Instances trainTemp = selector.reduceDimensionality(train);
+		Instances trainTest = selector.reduceDimensionality(test);
+		
+		
+		Instances [] reduced = {trainTemp, trainTest};
+
+		return reduced;
+	}
 }
