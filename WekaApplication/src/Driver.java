@@ -53,11 +53,12 @@ public class Driver {
 		//what attribute do we want to predict
 		String classAttribute = "Stage";
 		
-		String [] attributesToRemove = {};
+		String [] attributesToRemove = {"barcode", "das"};
 		String indicesToRemove = removeAttribute(instancesTrain, attributesToRemove);
 		
 		//these will be all the different classifiers that are tested, will be taken as program inputs
-		String [] classifiers = {"ZeroR", "J48", "RandomTree", "RandomForest", "NaiveBayes"};
+		String [] classifiers = {"ZeroR", "J48", "RandomTree", "RandomForest", "NaiveBayes",
+				"SimpleLogistic", "MultilayerPerceptron", "SMO", "KStar", "LWL"};
 		
 		//will be used to store the highest precision and most precise classifier name
 		Double max = 0.0;
