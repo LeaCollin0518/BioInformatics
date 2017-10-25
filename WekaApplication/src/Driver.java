@@ -13,6 +13,7 @@ import java.io.PrintWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Scanner;
+import org.postgresql.util.PSQLException;
 import java.sql.*;
 
 public class Driver {
@@ -23,34 +24,37 @@ public class Driver {
 		
 		Scanner sc = new Scanner(System.in);
 		
+		String trainingFile = "";
+		String testingFile = "";
+		
 		System.out.println("A BUNCH OF DIRECTIONS");
 		System.out.println("Please enter the directory name of where you would like to store all program outputs:");
 		
 		//String outputDir = sc.next();
 		String outputDir = args[0];
 		
-		System.out.println("Now please enter your database username:");
-		//String dbUsr = sc.next();
-		String dbUsr = args[1];
-		
-		System.out.println("Password:");
-		//String dbPwd = sc.next();
-		String dbPwd = args[2];
-		
-		System.out.println("Please enter the attribute you would like to predict:");
-		//String classAttribute = sc.next();
-		String classAttribute = "Stage";
-		
-		System.out.println("Finally, please enter the name of an algorithm you would like to test:");
-		//String alg = sc.next();
-		String alg = "J48";
+		//trying to connect to database given username and password, user prompted to enter username and password again if connection is unsuccessful
+		boolean successfulConnection = false;
+		while(!successfulConnection) {
+				System.out.println("Please enter your database username:");
+				String dbUsr = sc.next();
+				//String dbUsr = args[1];
+				
+				System.out.println("Password:");
+				String dbPwd = sc.next();
+				//String dbPwd = args[2];
+			try {
+				trainingFile = outputDir + "DatabaseTraining.arff";
+				testingFile = outputDir + "DatabaseTesting.arff";
+				connectToDatabase(dbUsr, dbPwd, dbConfig, trainingFile, testingFile);
+				
+				successfulConnection = true;
+			}catch (PSQLException s){
+				System.out.println("Username or password was incorrect. Please try again.");
+			}
+		}
 		
 		sc.close();
-		
-		String trainingFile = outputDir + "DatabaseTraining.arff";
-		String testingFile = outputDir + "DatabaseTesting.arff";
-		
-		connectToDatabase(dbUsr, dbPwd, dbConfig, trainingFile, testingFile);
 		
 		//reading the files and getting all the instances of each one
 		Instances instancesTrain = fileReader(trainingFile);
@@ -75,6 +79,7 @@ public class Driver {
 		}
 		
 		//what attribute do we want to predict
+		String classAttribute = "Stage";
 		
 		String [] classifiers = {"ZeroR", "J48", "RandomTree", "RandomForest", "NaiveBayes"};
 		
@@ -234,7 +239,6 @@ public class Driver {
 		return reduced;
 	}
 	
-	@SuppressWarnings("resource")
 	private static void connectToDatabase(String usrDB, String passwordDB, String conDB, String trainName, String testName) throws SQLException, FileNotFoundException {
 		
 		File trainingOutput = new File(trainName);
