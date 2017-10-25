@@ -66,8 +66,27 @@ public class Driver {
 		
 		//run all the different classifiers
 		Double [] precisions = predict(instancesTrain, instancesTest, classifiers, indicesToRemove, classAttribute, outputDir);
+		
+		
+		//writing precision values to a csv
+				String outputFile = outputDir + "Precision.csv";
+				File output = new File(outputFile);
+				PrintWriter pw = new PrintWriter(output);
+		        StringBuilder sb = new StringBuilder();
+		        sb.append("Algorithm");
+		        sb.append(',');
+		        sb.append("Precision");
+		        sb.append("\n");
+		        
+		//find best algorithm and write to file
 		for(int i = 0; i < classifiers.length; i++) {
 			System.out.println("Algorithm: " + classifiers[i] + ", Precision: " + precisions[i]);
+			sb.append(classifiers[i] + ",");
+			sb.append(precisions[i]);
+			
+			if(i != classifiers.length - 1) {
+				sb.append("\n");
+			}
 			
 			if(precisions[i] > max) {
 				max = precisions[i];
@@ -76,6 +95,9 @@ public class Driver {
 		}
 		System.out.println();
 		System.out.println("Best Algorithm: " + bestMethod + " with precision: " + max);
+        
+		pw.write(sb.toString());
+        pw.close();
 
 	}
 	public static Instances fileReader(String input) throws IOException {
