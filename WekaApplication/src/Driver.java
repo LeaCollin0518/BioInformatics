@@ -12,6 +12,7 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Scanner;
 import org.postgresql.util.PSQLException;
 import java.sql.*;
@@ -20,29 +21,52 @@ public class Driver {
 	
 	public static void main(String [] args) throws Exception {
 		
-		String dbConfig = args[3];
+		String dbConfig = args[0];
+		
+		//ArrayList will contain all the possible algorithms that the user can input
+		//needs to be expanded on still probably
+		ArrayList<String> possibleClassifiers = new ArrayList<String>();
+		possibleClassifiers.add("ZeroR");
+		possibleClassifiers.add("BayesNet");
+		possibleClassifiers.add("NaiveBayes");
+		possibleClassifiers.add("BayesNet");
+		possibleClassifiers.add("Logisitc");
+		possibleClassifiers.add("MultilayerPerceptron");
+		possibleClassifiers.add("SimpleLogisitc");
+		possibleClassifiers.add("SMO");
+		possibleClassifiers.add("IBk");
+		possibleClassifiers.add("KStar");
+		possibleClassifiers.add("LWL");
+		possibleClassifiers.add("DecisionStump");
+		possibleClassifiers.add("HoeffdingTree");
+		possibleClassifiers.add("J48");
+		possibleClassifiers.add("LMT");
+		possibleClassifiers.add("RandomForest");
+		possibleClassifiers.add("RandomTree");
+		possibleClassifiers.add("REPTree");
 		
 		Scanner sc = new Scanner(System.in);
-		
-		String trainingFile = "";
-		String testingFile = "";
-		
+			
 		System.out.println("A BUNCH OF DIRECTIONS");
 		System.out.println("Please enter the directory name of where you would like to store all program outputs:");
 		
+		//add control to check for valid directory
 		//String outputDir = sc.next();
-		String outputDir = args[0];
+		String outputDir = args[1];
+		
+		String trainingFile = "";
+		String testingFile = "";
 		
 		//trying to connect to database given username and password, user prompted to enter username and password again if connection is unsuccessful
 		boolean successfulConnection = false;
 		while(!successfulConnection) {
 				System.out.println("Please enter your database username:");
-				String dbUsr = sc.next();
-				//String dbUsr = args[1];
+				//String dbUsr = sc.next();
+				String dbUsr = args[2];
 				
 				System.out.println("Password:");
-				String dbPwd = sc.next();
-				//String dbPwd = args[2];
+				//String dbPwd = sc.next();
+				String dbPwd = args[3];
 			try {
 				trainingFile = outputDir + "DatabaseTraining.arff";
 				testingFile = outputDir + "DatabaseTesting.arff";
@@ -51,6 +75,31 @@ public class Driver {
 				successfulConnection = true;
 			}catch (PSQLException s){
 				System.out.println("Username or password was incorrect. Please try again.");
+			}
+		}
+		
+		
+		//getting user input for classifier names, checking if input is valid
+		String [] classifiers = null;
+		
+		boolean validClassifier = false;
+		while(!validClassifier){
+			System.out.println("Please enter the names of the classifiers you'd like to test, separated by a single space.");
+			String userInput = sc.nextLine();
+			
+			//classifiers = {"ZeroR", "J48", "RandomTree", "RandomForest", "NaiveBayes"};
+			classifiers = userInput.split("\\s+");
+			for(int i = 0; i < classifiers.length; i++) {
+				if(!possibleClassifiers.contains(classifiers[i])) {
+					System.out.println("You entered an incorrect classifier name.");
+					System.out.println("Please try again.");
+					System.out.println();
+					break;
+				}
+				
+				if(i == classifiers.length - 1 && possibleClassifiers.contains(classifiers[i])) {
+					validClassifier = true;
+				}
 			}
 		}
 		
@@ -81,8 +130,6 @@ public class Driver {
 		//what attribute do we want to predict
 		String classAttribute = "Stage";
 		
-		String [] classifiers = {"ZeroR", "J48", "RandomTree", "RandomForest", "NaiveBayes"};
-		
 		//need to keep track of the precision of different algorithms
 		HashMap <String, Double> precisionVals = new HashMap <String, Double>();
 		double maxPrecision = 0.0;
@@ -103,6 +150,8 @@ public class Driver {
 		}
 		
 		System.out.println("Best Method: " + bestMethod + ", Precision: " + maxPrecision);
+		
+		
 	}
 		
 	public static Instances fileReader(String input) throws IOException {
