@@ -8,7 +8,6 @@ import weka.classifiers.AbstractClassifier;
 import weka.classifiers.meta.FilteredClassifier;
 import weka.core.converters.ArffLoader;
 import weka.filters.unsupervised.attribute.Remove;
-import weka.attributeSelection.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -86,6 +85,7 @@ public class Driver {
 		boolean validClassifier = false;
 		while(!validClassifier){
 			System.out.println("Please enter the names of the classifiers you'd like to test, separated by a single space.");
+			sc.nextLine();
 			String userInput = sc.nextLine();
 			
 			//classifiers = {"ZeroR", "J48", "RandomTree", "RandomForest", "NaiveBayes"};
@@ -109,25 +109,7 @@ public class Driver {
 		//reading the files and getting all the instances of each one
 		Instances instancesTrain = fileReader(trainingFile);
 		Instances instancesTest = fileReader(testingFile);
-		
-		
-		String reduce = "no";
-		
-		if(reduce.equals("yes")){
-			//selecting most relevant attributes
-			//String evaluator = "cfs";
-			//String evaluator = "corr";
-			//String evaluator = "oner";
-			//String evaluator = "principal";
-			String evaluator = "relief";
-			
-			Instances [] reduced = attributeSelector(instancesTrain, instancesTest, evaluator);
-			
-			instancesTrain = reduced[0];
-			
-			instancesTest = reduced[1];
-		}
-		
+				
 		//what attribute do we want to predict
 		String classAttribute = "Stage";
 		
@@ -492,57 +474,5 @@ public class Driver {
 			e.printStackTrace();
 
 		}
-	}
-	
-	public static Instances [] attributeSelector(Instances train, Instances test, String evaluator) throws Exception {
-		
-		AttributeSelection selector = new AttributeSelection();
-		
-		if (evaluator.equals("cfs")) {
-			CfsSubsetEval eval = new CfsSubsetEval();
-			BestFirst search = new BestFirst();
-			selector.setEvaluator(eval);
-			selector.setSearch(search);
-		}
-		else if(evaluator.equals("corr")) {
-			CorrelationAttributeEval eval = new CorrelationAttributeEval();
-	        Ranker search = new Ranker();
-	        selector.setEvaluator(eval);
-			selector.setSearch(search);
-		}
-		else if(evaluator.equals("oner")) {
-			OneRAttributeEval eval = new OneRAttributeEval();
-	        Ranker search = new Ranker();
-	        selector.setEvaluator(eval);
-			selector.setSearch(search);
-		}
-		/*need to fix this
-		 * else if(evaluator.equals("principal")) {
-			PrincipalComponents eval = new PrincipalComponents();
-	        Ranker search = new Ranker();
-	        selector.setEvaluator(eval);
-			selector.setSearch(search);
-		}*/
-		else if(evaluator.equals("relief")) {
-			ReliefFAttributeEval eval = new ReliefFAttributeEval();
-	        Ranker search = new Ranker();
-	        selector.setEvaluator(eval);
-			selector.setSearch(search);
-		}
-		
-        
-		selector.SelectAttributes(train);
-		
-		//rankedAttributes gives the ranking of the attributes along with their weights
-		//selected Attributes just gives the order of the ranking
-
-		
-		Instances trainTemp = selector.reduceDimensionality(train);
-		Instances trainTest = selector.reduceDimensionality(test);
-		
-		
-		Instances [] reduced = {trainTemp, trainTest};
-
-		return reduced;
 	}
 }
