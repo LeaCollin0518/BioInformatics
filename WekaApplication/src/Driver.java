@@ -57,6 +57,8 @@ public class Driver {
 		
 		String trainingFile = "";
 		String testingFile = "";
+		String predictionFile = "";
+		String precisionFile = "";
 		
 		//control flow to make sure file input names end in .arff for both training and testing data
 		boolean validTraining = false;
@@ -159,6 +161,60 @@ public class Driver {
 			}
 		}
 		
+		System.out.println();
+		System.out.println("Please enter the name of the file you would like to store all of the predictions. Please end the file in '.csv'");
+		boolean validPrediction = false;
+		while(!validPrediction) {
+			predictionFile = outputDir + sc.next();
+			if(validCsv(predictionFile) == validPrediction) {
+				System.out.println("Sorry, the file you entered does not end in '.csv'. Please try again");
+			}
+			else if(fileExists(predictionFile)) {
+				System.out.println("This file already exists in this directory. Do you want to overwrite it? (Y/n)?");
+				String answer = sc.next();
+				if(answer.equals("Y") || answer.equals("y")) {
+					validPrediction = true;
+				}
+				else if(answer.equals("N") || answer.equals("n")){
+					System.out.println("Please enter another name.");
+				}
+				else {
+					System.out.println("Could not understand input. Please enter a name again.");
+				}
+			}
+			else {
+				validPrediction = true;
+			}
+		}
+		
+		System.out.println();
+		System.out.println("Finally, please enter the name of the file you would like to store the precision of each algorithm you are testing. "
+				+ "Please end the file in '.csv'");
+		boolean validPrecision = false;
+		while(!validPrecision) {
+			precisionFile = outputDir + sc.next();
+			if(validCsv(precisionFile) == validPrecision) {
+				System.out.println("Sorry, the file you entered does not end in '.csv'. Please try again");
+			}
+			else if(fileExists(precisionFile)) {
+				System.out.println("This file already exists in this directory. Do you want to overwrite it? (Y/n)?");
+				String answer = sc.next();
+				if(answer.equals("Y") || answer.equals("y")) {
+					validPrecision = true;
+				}
+				else if(answer.equals("N") || answer.equals("n")){
+					System.out.println("Please enter another name.");
+				}
+				else {
+					System.out.println("Could not understand input. Please enter a name again.");
+				}
+			}
+			else {
+				validPrecision = true;
+			}
+		}
+		
+		
 		sc.close();
 		
 		//reading the files and getting all the instances of each one
@@ -177,12 +233,11 @@ public class Driver {
 		String bestMethod = "";
 		
 		//run all the different classifiers
-		Double [] precisions = predict(instancesTrain, instancesTest, classifiers, indicesToRemove, classAttribute, outputDir);
+		Double [] precisions = predict(instancesTrain, instancesTest, classifiers, indicesToRemove, classAttribute, predictionFile);
 		
 		
 		//writing precision values to a csv
-				String outputFile = outputDir + "Precision.csv";
-				File output = new File(outputFile);
+				File output = new File(precisionFile);
 				PrintWriter pw = new PrintWriter(output);
 		        StringBuilder sb = new StringBuilder();
 		        sb.append("Algorithm");
@@ -210,8 +265,13 @@ public class Driver {
         pw.close();
 	}
 	
-	public static boolean validArff (String file) {
+	public static boolean validArff(String file) {
+		//string must contain and end in .arff to be a valid arff file
 		return (file.contains(".arff") && file.indexOf(".arff") == file.length() - 5);
+	}
+	
+	public static boolean validCsv(String file) {
+		return (file.contains(".csv") && file.indexOf(".csv") == file.length() - 4);
 	}
 	
 	public static boolean fileExists(String file) {
@@ -249,7 +309,7 @@ public class Driver {
 	}
 	
 	public static Double [] predict(Instances train, Instances test, String [] classifierNames, 
-		String indicesToRemove, String classAttribute, String outputDir) throws Exception {
+		String indicesToRemove, String classAttribute, String outputFile) throws Exception {
 		
 		//set the Class (what we want to predict)
 		test.setClass(test.attribute(classAttribute));
@@ -285,8 +345,6 @@ public class Driver {
 		for(int i = 0; i < classifiers.length; i++) {
 			classifiers[i].buildClassifier(train);
 		}
-		
-		String outputFile = outputDir + "Predicted.csv";
 		
 		//writing the header to the output csv
 		File output = new File(outputFile);
