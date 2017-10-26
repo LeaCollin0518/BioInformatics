@@ -27,7 +27,6 @@ public class Driver {
 		//needs to be expanded on still probably
 		ArrayList<String> possibleClassifiers = new ArrayList<String>();
 		possibleClassifiers.add("ZeroR");
-		possibleClassifiers.add("BayesNet");
 		possibleClassifiers.add("NaiveBayes");
 		possibleClassifiers.add("BayesNet");
 		possibleClassifiers.add("Logisitc");
@@ -54,9 +53,67 @@ public class Driver {
 		//String outputDir = sc.next();
 		String outputDir = args[1];
 		
+		System.out.println();
+		
 		String trainingFile = "";
 		String testingFile = "";
 		
+		//control flow to make sure file input names end in .arff for both training and testing data
+		boolean validTraining = false;
+		System.out.println("Please enter the name of the file you'd like to store the TRAINING data. Please end the file name in '.arff'");
+		while(!validTraining) {
+			trainingFile = outputDir + sc.next();			
+			if(validArff(trainingFile) == validTraining) {
+				System.out.println("Sorry, the file you entered does not end in '.arff'. Please try again.");
+			}
+			else if(fileExists(trainingFile)) {
+				System.out.println("This file already exists in this directory. Do you want to overwrite it? (Y/n)?");
+				String answer = sc.next();
+				if(answer.equals("Y") || answer.equals("y")) {
+					validTraining = true;
+				}
+				else if(answer.equals("N") || answer.equals("n")){
+					System.out.println("Please enter another name.");
+				}
+				else {
+					System.out.println("Could not understand input. Please enter a name again.");
+				}
+			}
+			else {
+				validTraining = true;
+			}
+		}
+		
+		System.out.println();
+		
+		boolean validTesting = false;
+		System.out.println("Please enter the name of the file you'd like to store the TESTING data. Please end the file name in '.arff'");
+		while(!validTesting) {
+			testingFile = outputDir + sc.next();
+			if(validArff(testingFile) == validTesting) {
+				System.out.println("Sorry, the file you entered does not end in '.arff'. Please try again");
+			}
+			else if(testingFile.equals(trainingFile)) {
+				System.out.println("Your training and testing filenames cannot be the same. Please try again.");
+			}
+			else if(fileExists(testingFile)) {
+				System.out.println("This file already exists in this directory. Do you want to overwrite it? (Y/n)?");
+				String answer = sc.next();
+				if(answer.equals("Y") || answer.equals("y")) {
+					validTesting = true;
+				}
+				else if(answer.equals("N") || answer.equals("n")){
+					System.out.println("Please enter another name.");
+				}
+				else {
+					System.out.println("Could not understand input. Please enter a name again.");
+				}
+			}
+			else {
+				validTesting = true;
+			}
+		}
+				
 		//trying to connect to database given username and password, user prompted to enter username and password again if connection is unsuccessful
 		boolean successfulConnection = false;
 		while(!successfulConnection) {
@@ -66,10 +123,9 @@ public class Driver {
 				
 				System.out.println("Password:");
 				//String dbPwd = sc.next();
+				//sc.nextLine();
 				String dbPwd = args[3];
 			try {
-				trainingFile = outputDir + "DatabaseTraining.arff";
-				testingFile = outputDir + "DatabaseTesting.arff";
 				connectToDatabase(dbUsr, dbPwd, dbConfig, trainingFile, testingFile);
 				
 				successfulConnection = true;
@@ -85,7 +141,6 @@ public class Driver {
 		boolean validClassifier = false;
 		while(!validClassifier){
 			System.out.println("Please enter the names of the classifiers you'd like to test, separated by a single space.");
-			sc.nextLine();
 			String userInput = sc.nextLine();
 			
 			//classifiers = {"ZeroR", "J48", "RandomTree", "RandomForest", "NaiveBayes"};
@@ -153,8 +208,17 @@ public class Driver {
         
 		pw.write(sb.toString());
         pw.close();
-
 	}
+	
+	public static boolean validArff (String file) {
+		return (file.contains(".arff") && file.indexOf(".arff") == file.length() - 5);
+	}
+	
+	public static boolean fileExists(String file) {
+		File newFile = new File(file);
+		return newFile.exists();
+	}
+	
 	public static Instances fileReader(String input) throws IOException {
 
 		File inputFile = new File(input);
