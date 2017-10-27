@@ -19,6 +19,8 @@ import java.sql.*;
 
 public class Driver {
 	
+	static Scanner sc = new Scanner(System.in);
+	
 	public static void main(String [] args) throws Exception {
 		
 		String dbConfig = args[0];
@@ -28,7 +30,6 @@ public class Driver {
 		ArrayList<String> possibleClassifiers = new ArrayList<String>();
 		possibleClassifiers.add("ZeroR");
 		possibleClassifiers.add("NaiveBayes");
-		possibleClassifiers.add("BayesNet");
 		possibleClassifiers.add("Logisitc");
 		possibleClassifiers.add("MultilayerPerceptron");
 		possibleClassifiers.add("SimpleLogisitc");
@@ -44,7 +45,6 @@ public class Driver {
 		possibleClassifiers.add("RandomTree");
 		possibleClassifiers.add("REPTree");
 		
-		Scanner sc = new Scanner(System.in);
 			
 		System.out.println("A BUNCH OF DIRECTIONS");
 		System.out.println("Please enter the directory name of where you would like to store all program outputs:");
@@ -55,78 +55,25 @@ public class Driver {
 		
 		System.out.println();
 		
-		String trainingFile = "";
-		String testingFile = "";
-		String predictionFile = "";
-		String precisionFile = "";
-		
-		//control flow to make sure file input names end in .arff for both training and testing data
-		boolean validTraining = false;
 		System.out.println("Please enter the name of the file you'd like to store the TRAINING data. Please end the file name in '.arff'");
-		while(!validTraining) {
-			trainingFile = outputDir + sc.next();			
-			if(validArff(trainingFile) == validTraining) {
-				System.out.println("Sorry, the file you entered does not end in '.arff'. Please try again.");
-			}
-			else if(fileExists(trainingFile)) {
-				System.out.println("This file already exists in this directory. Do you want to overwrite it? (Y/n)?");
-				String answer = sc.next();
-				if(answer.equals("Y") || answer.equals("y")) {
-					validTraining = true;
-				}
-				else if(answer.equals("N") || answer.equals("n")){
-					System.out.println("Please enter another name.");
-				}
-				else {
-					System.out.println("Could not understand input. Please enter a name again.");
-				}
-			}
-			else {
-				validTraining = true;
-			}
-		}
-		
+		String trainingFile = setFileName(".arff", outputDir);
 		System.out.println();
 		
-		boolean validTesting = false;
 		System.out.println("Please enter the name of the file you'd like to store the TESTING data. Please end the file name in '.arff'");
-		while(!validTesting) {
-			testingFile = outputDir + sc.next();
-			if(validArff(testingFile) == validTesting) {
-				System.out.println("Sorry, the file you entered does not end in '.arff'. Please try again");
-			}
-			else if(testingFile.equals(trainingFile)) {
-				System.out.println("Your training and testing filenames cannot be the same. Please try again.");
-			}
-			else if(fileExists(testingFile)) {
-				System.out.println("This file already exists in this directory. Do you want to overwrite it? (Y/n)?");
-				String answer = sc.next();
-				if(answer.equals("Y") || answer.equals("y")) {
-					validTesting = true;
-				}
-				else if(answer.equals("N") || answer.equals("n")){
-					System.out.println("Please enter another name.");
-				}
-				else {
-					System.out.println("Could not understand input. Please enter a name again.");
-				}
-			}
-			else {
-				validTesting = true;
-			}
-		}
-				
+		String testingFile = setFileName(".arff", outputDir);
+		System.out.println();
+		
 		//trying to connect to database given username and password, user prompted to enter username and password again if connection is unsuccessful
 		boolean successfulConnection = false;
 		while(!successfulConnection) {
 				System.out.println("Please enter your database username:");
-				//String dbUsr = sc.next();
-				String dbUsr = args[2];
+				String dbUsr = sc.next();
+				//String dbUsr = args[2];
 				
 				System.out.println("Password:");
-				//String dbPwd = sc.next();
-				//sc.nextLine();
-				String dbPwd = args[3];
+				String dbPwd = sc.next();
+				sc.nextLine();
+				//String dbPwd = args[3];
 			try {
 				connectToDatabase(dbUsr, dbPwd, dbConfig, trainingFile, testingFile);
 				
@@ -163,57 +110,13 @@ public class Driver {
 		
 		System.out.println();
 		System.out.println("Please enter the name of the file you would like to store all of the predictions. Please end the file in '.csv'");
-		boolean validPrediction = false;
-		while(!validPrediction) {
-			predictionFile = outputDir + sc.next();
-			if(validCsv(predictionFile) == validPrediction) {
-				System.out.println("Sorry, the file you entered does not end in '.csv'. Please try again");
-			}
-			else if(fileExists(predictionFile)) {
-				System.out.println("This file already exists in this directory. Do you want to overwrite it? (Y/n)?");
-				String answer = sc.next();
-				if(answer.equals("Y") || answer.equals("y")) {
-					validPrediction = true;
-				}
-				else if(answer.equals("N") || answer.equals("n")){
-					System.out.println("Please enter another name.");
-				}
-				else {
-					System.out.println("Could not understand input. Please enter a name again.");
-				}
-			}
-			else {
-				validPrediction = true;
-			}
-		}
+		String predictionFile = setFileName(".csv", outputDir);
 		
 		System.out.println();
 		System.out.println("Finally, please enter the name of the file you would like to store the precision of each algorithm you are testing. "
 				+ "Please end the file in '.csv'");
-		boolean validPrecision = false;
-		while(!validPrecision) {
-			precisionFile = outputDir + sc.next();
-			if(validCsv(precisionFile) == validPrecision) {
-				System.out.println("Sorry, the file you entered does not end in '.csv'. Please try again");
-			}
-			else if(fileExists(precisionFile)) {
-				System.out.println("This file already exists in this directory. Do you want to overwrite it? (Y/n)?");
-				String answer = sc.next();
-				if(answer.equals("Y") || answer.equals("y")) {
-					validPrecision = true;
-				}
-				else if(answer.equals("N") || answer.equals("n")){
-					System.out.println("Please enter another name.");
-				}
-				else {
-					System.out.println("Could not understand input. Please enter a name again.");
-				}
-			}
-			else {
-				validPrecision = true;
-			}
-		}
-		
+		String precisionFile = setFileName(".csv", outputDir);
+		System.out.println();
 		
 		sc.close();
 		
@@ -277,6 +180,43 @@ public class Driver {
 	public static boolean fileExists(String file) {
 		File newFile = new File(file);
 		return newFile.exists();
+	}
+	
+	public static String setFileName(String fileType, String outputDir) {
+		String outputFile = "";
+		boolean isValid = false;
+		while(!isValid) {
+			outputFile = outputDir + sc.next();	
+			if(fileType.equals(".arff")) {
+				if(validArff(outputFile) == isValid) {
+					System.out.println("Sorry, the file you entered does not end in '.arff'. Please try again.");
+					continue;
+				}
+			}
+			if(fileType.equals(".csv")) {
+				if(validCsv(outputFile) == isValid) {
+					System.out.println("Sorry, the file you entered does not end in '.csv'. Please try again.");
+					continue;
+				}
+			}
+			if(fileExists(outputFile)) {
+				System.out.println("This file already exists in this directory. Do you want to overwrite it? (Y/n)?");
+				String answer = sc.next();
+				if(answer.equals("Y") || answer.equals("y")) {
+					isValid = true;
+				}
+				else if(answer.equals("N") || answer.equals("n")){
+					System.out.println("Please enter another name.");
+				}
+				else {
+					System.out.println("Could not understand input. Please enter a name again.");
+				}
+			}
+			else {
+				isValid = true;
+			}
+		}
+		return outputFile;
 	}
 	
 	public static Instances fileReader(String input) throws IOException {
