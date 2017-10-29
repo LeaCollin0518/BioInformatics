@@ -50,11 +50,12 @@ public class Driver {
 		System.out.println("Please enter the directory name of where you would like to store all program outputs:");
 		
 		//add control to check for valid directory
-		//String outputDir = sc.next();
-		String outputDir = args[1];
+		String outputDir = setOutputDirectory();
+		//String outputDir = args[1];
+		
 		
 		System.out.println();
-		
+		System.out.println("YAY");
 		System.out.println("Please enter the name of the file you'd like to store the TRAINING data. Please end the file name in '.arff'");
 		String trainingFile = setFileName(".arff", outputDir);
 		System.out.println();
@@ -180,6 +181,24 @@ public class Driver {
 	public static boolean fileExists(String file) {
 		File newFile = new File(file);
 		return newFile.exists();
+	}
+	
+	public static String setOutputDirectory() {
+		String dirName = "";
+		boolean isValid = false;
+		while(!isValid) {
+			dirName = sc.next();
+			File dir = new File(dirName);
+			
+			if(dir.exists() && (dirName.charAt(dirName.length()-1) == '/')) {
+				isValid = true;
+			}
+			else {
+				System.out.println("Sorry that was an invalid directory. Please try again.");
+			}
+		}
+		
+		return dirName;
 	}
 	
 	public static String setFileName(String fileType, String outputDir) {
