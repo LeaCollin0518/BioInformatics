@@ -21,10 +21,10 @@ public class Driver {
 	public static void main(String [] args) throws Exception {
 		
 		//some of these will later be taken in as arguments inputted directly by the user
-		String outputDir = args[0];
-		String dbUsr = args[1];
-		String dbPwd = args[2];
-		String dbConfig = args[3];
+		String dbConfig = args[0];
+		String outputDir = args[1];
+		String dbUsr = args[2];
+		String dbPwd = args[3];
 		
 		//these will be the ARFF files that the program writes to from the database and then reads from 
 		String trainingFile = outputDir + "DatabaseTraining.arff";
