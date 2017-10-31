@@ -55,7 +55,6 @@ public class Driver {
 		
 		
 		System.out.println();
-		System.out.println("YAY");
 		System.out.println("Please enter the name of the file you'd like to store the TRAINING data. Please end the file name in '.arff'");
 		String trainingFile = setFileName(".arff", outputDir);
 		System.out.println();
@@ -70,7 +69,6 @@ public class Driver {
 				System.out.println("Please enter your database username:");
 				String dbUsr = sc.next();
 				//String dbUsr = args[2];
-				
 				System.out.println("Password:");
 				String dbPwd = sc.next();
 				sc.nextLine();
