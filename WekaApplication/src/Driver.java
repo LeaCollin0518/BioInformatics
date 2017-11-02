@@ -30,9 +30,7 @@ public class Driver {
 		ArrayList<String> possibleClassifiers = new ArrayList<String>();
 		possibleClassifiers.add("ZeroR");
 		possibleClassifiers.add("NaiveBayes");
-		possibleClassifiers.add("Logisitc");
 		possibleClassifiers.add("MultilayerPerceptron");
-		possibleClassifiers.add("SimpleLogisitc");
 		possibleClassifiers.add("SMO");
 		possibleClassifiers.add("IBk");
 		possibleClassifiers.add("KStar");
@@ -50,17 +48,19 @@ public class Driver {
 		System.out.println("Please enter the directory name of where you would like to store all program outputs:");
 		
 		//add control to check for valid directory
-		String outputDir = setOutputDirectory();
-		//String outputDir = args[1];
+		//String outputDir = setOutputDirectory();
+		String outputDir = args[1];
 		
 		
 		System.out.println();
 		System.out.println("Please enter the name of the file you'd like to store the TRAINING data. Please end the file name in '.arff'");
-		String trainingFile = setFileName(".arff", outputDir);
+		//String trainingFile = setFileName(".arff", outputDir);
+		String trainingFile = outputDir + "trainingData.arff";
 		System.out.println();
 		
 		System.out.println("Please enter the name of the file you'd like to store the TESTING data. Please end the file name in '.arff'");
-		String testingFile = setFileName(".arff", outputDir);
+		//String testingFile = setFileName(".arff", outputDir);
+		String testingFile = outputDir + "testingData.arff";
 		System.out.println();
 		
 		//trying to connect to database given username and password, user prompted to enter username and password again if connection is unsuccessful
@@ -88,33 +88,50 @@ public class Driver {
 		
 		boolean validClassifier = false;
 		while(!validClassifier){
-			System.out.println("Please enter the names of the classifiers you'd like to test, separated by a single space.");
-			String userInput = sc.nextLine();
-			
-			//classifiers = {"ZeroR", "J48", "RandomTree", "RandomForest", "NaiveBayes"};
-			classifiers = userInput.split("\\s+");
-			for(int i = 0; i < classifiers.length; i++) {
-				if(!possibleClassifiers.contains(classifiers[i])) {
-					System.out.println("You entered an incorrect classifier name.");
-					System.out.println("Please try again.");
-					System.out.println();
-					break;
+			System.out.println("Do you want to run the default set of classification algorithms? (Y/n)");
+			String answer = sc.next();
+			if(answer.equals("Y") || answer.equals("y")) {
+				classifiers = new String[possibleClassifiers.size()];
+				for(int i = 0; i < classifiers.length; i++) {
+					classifiers[i] = possibleClassifiers.get(i);
 				}
+				validClassifier = true;
+			}
+			else if(answer.equals("N") || answer.equals("n")){
+				System.out.println("Please enter the names of the classifiers you'd like to test, separated by a single space.");
+				sc.nextLine();
+				String classifierInput = sc.nextLine();
+				classifiers = classifierInput.split("\\s+");
 				
-				if(i == classifiers.length - 1 && possibleClassifiers.contains(classifiers[i])) {
-					validClassifier = true;
+				for(int i = 0; i < classifiers.length; i++) {
+					if(!possibleClassifiers.contains(classifiers[i])) {
+						System.out.println("You entered an incorrect classifier name.");
+						System.out.println("Please try again.");
+						System.out.println();
+						break;
+					}
+					
+					if(i == classifiers.length - 1 && possibleClassifiers.contains(classifiers[i])) {
+						validClassifier = true;
+					}
 				}
 			}
+			else {
+				System.out.println("Could not understand input.");
+			}
+			
 		}
 		
 		System.out.println();
 		System.out.println("Please enter the name of the file you would like to store all of the predictions. Please end the file in '.csv'");
-		String predictionFile = setFileName(".csv", outputDir);
+		//String predictionFile = setFileName(".csv", outputDir);
+		String predictionFile = outputDir + "prediction.csv";
 		
 		System.out.println();
 		System.out.println("Finally, please enter the name of the file you would like to store the precision of each algorithm you are testing. "
 				+ "Please end the file in '.csv'");
-		String precisionFile = setFileName(".csv", outputDir);
+		//String precisionFile = setFileName(".csv", outputDir);
+		String precisionFile = outputDir + "precision.csv";
 		System.out.println();
 		
 		sc.close();
@@ -149,7 +166,7 @@ public class Driver {
 		        
 		//find best algorithm and write to file
 		for(int i = 0; i < classifiers.length; i++) {
-			System.out.println("Algorithm: " + classifiers[i] + ", Precision: " + precisions[i]);
+			System.out.println("Algorithm: " + classifiers[i] + ", Precision: " + precisions[i] + '\n');
 			sb.append(classifiers[i] + ",");
 			sb.append(precisions[i]);
 			
