@@ -8,54 +8,137 @@ import weka.classifiers.AbstractClassifier;
 import weka.classifiers.meta.FilteredClassifier;
 import weka.core.converters.ArffLoader;
 import weka.filters.unsupervised.attribute.Remove;
-import weka.attributeSelection.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Scanner;
+import org.postgresql.util.PSQLException;
 import java.sql.*;
 
 public class Driver {
 	
+	static Scanner sc = new Scanner(System.in);
+	
 	public static void main(String [] args) throws Exception {
-		
-		//some of these will later be taken in as arguments inputted directly by the user
+
 		String dbConfig = args[0];
-		String outputDir = args[1];
-		String dbUsr = args[2];
-		String dbPwd = args[3];
 		
-		//these will be the ARFF files that the program writes to from the database and then reads from 
-		String trainingFile = outputDir + "DatabaseTraining.arff";
-		String testingFile = outputDir + "DatabaseTesting.arff";
+		//ArrayList will contain all the possible algorithms that the user can input
+		//needs to be expanded on still probably
+		ArrayList<String> possibleClassifiers = new ArrayList<String>();
+		possibleClassifiers.add("ZeroR");
+		possibleClassifiers.add("NaiveBayes");
+		possibleClassifiers.add("MultilayerPerceptron");
+		possibleClassifiers.add("SMO");
+		possibleClassifiers.add("IBk");
+		possibleClassifiers.add("KStar");
+		possibleClassifiers.add("LWL");
+		possibleClassifiers.add("DecisionStump");
+		possibleClassifiers.add("HoeffdingTree");
+		possibleClassifiers.add("J48");
+		possibleClassifiers.add("LMT");
+		possibleClassifiers.add("RandomForest");
+		possibleClassifiers.add("RandomTree");
+		possibleClassifiers.add("REPTree");
 		
-		//function call to connect to database and create training and testing files
-		connectToDatabase(dbUsr, dbPwd, dbConfig, trainingFile, testingFile);
+			
+		System.out.println("A BUNCH OF DIRECTIONS");
+		System.out.println("Please enter the directory name of where you would like to store all program outputs:");
+		
+		//add control to check for valid directory
+		String outputDir = setOutputDirectory();
+		//String outputDir = args[1];
+		
+		
+		System.out.println();
+		System.out.println("Please enter the name of the file you'd like to store the TRAINING data. Please end the file name in '.arff'");
+		String trainingFile = setFileName(".arff", outputDir);
+		//String trainingFile = outputDir + "trainingData.arff";
+		System.out.println();
+		
+		System.out.println("Please enter the name of the file you'd like to store the TESTING data. Please end the file name in '.arff'");
+		String testingFile = setFileName(".arff", outputDir);
+		//String testingFile = outputDir + "testingData.arff";
+		System.out.println();
+		
+		//trying to connect to database given username and password, user prompted to enter username and password again if connection is unsuccessful
+		boolean successfulConnection = false;
+		while(!successfulConnection) {
+				System.out.println("Please enter your database username:");
+				String dbUsr = sc.next();
+				//String dbUsr = args[2];
+				System.out.println("Password:");
+				String dbPwd = sc.next();
+				sc.nextLine();
+				//String dbPwd = args[3];
+			try {
+				connectToDatabase(dbUsr, dbPwd, dbConfig, trainingFile, testingFile);
+				
+				successfulConnection = true;
+			}catch (PSQLException s){
+				System.out.println("Username or password was incorrect. Please try again.");
+			}
+		}
+		
+		
+		//getting user input for classifier names, checking if input is valid
+		String [] classifiers = null;
+		
+		boolean validClassifier = false;
+		while(!validClassifier){
+			System.out.println("Do you want to run the default set of classification algorithms? (Y/n)");
+			String answer = sc.next();
+			if(answer.equals("Y") || answer.equals("y")) {
+				classifiers = new String[possibleClassifiers.size()];
+				for(int i = 0; i < classifiers.length; i++) {
+					classifiers[i] = possibleClassifiers.get(i);
+				}
+				validClassifier = true;
+			}
+			else if(answer.equals("N") || answer.equals("n")){
+				System.out.println("Please enter the names of the classifiers you'd like to test, separated by a single space.");
+				sc.nextLine();
+				String classifierInput = sc.nextLine();
+				classifiers = classifierInput.split("\\s+");
+				
+				for(int i = 0; i < classifiers.length; i++) {
+					if(!possibleClassifiers.contains(classifiers[i])) {
+						System.out.println(classifiers[i] + " is not a valid classifier name.");
+						System.out.println("Please try again.");
+						System.out.println();
+					}
+					
+					if(i == classifiers.length - 1 && possibleClassifiers.contains(classifiers[i])) {
+						validClassifier = true;
+					}
+				}
+			}
+			else {
+				System.out.println("Could not understand input.");
+			}
+			
+		}
+		
+		System.out.println();
+		System.out.println("Please enter the name of the file you would like to store all of the predictions. Please end the file in '.csv'");
+		String predictionFile = setFileName(".csv", outputDir);
+		//String predictionFile = outputDir + "prediction.csv";
+		
+		System.out.println();
+		System.out.println("Finally, please enter the name of the file you would like to store the precision of each algorithm you are testing. "
+				+ "Please end the file in '.csv'");
+		String precisionFile = setFileName(".csv", outputDir);
+		//String precisionFile = outputDir + "precision.csv";
+		System.out.println();
+		
+		sc.close();
 		
 		//reading the files and getting all the instances of each one
 		Instances instancesTrain = fileReader(trainingFile);
 		Instances instancesTest = fileReader(testingFile);
-		
-		
-		//optional 'filtering' methods, don't know if I will keep 
-		String reduce = "no";
-		
-		if(reduce.equals("yes")){
-			//selecting most relevant attributes
-			//String evaluator = "cfs";
-			//String evaluator = "corr";
-			//String evaluator = "oner";
-			//String evaluator = "principal";
-			String evaluator = "relief";
-			
-			Instances [] reduced = attributeSelector(instancesTrain, instancesTest, evaluator);
-			
-			instancesTrain = reduced[0];
-			
-			instancesTest = reduced[1];
-		}
-		
+				
 		//what attribute do we want to predict
 		String classAttribute = "Stage";
 		
@@ -64,32 +147,111 @@ public class Driver {
 		//returns the indices of the attributes to be ignored
 		String indicesToRemove = removeAttribute(instancesTrain, attributesToRemove);
 		
-		//the different classifiers to try, again will probably be taken in as program arguments
-		String [] classifiers = {"ZeroR", "J48", "RandomTree", "RandomForest", "NaiveBayes"};
-		
-		//need to keep track of the precision of different algorithms
-		HashMap <String, Double> precisionVals = new HashMap <String, Double>();
 		double maxPrecision = 0.0;
+
 		String bestMethod = "";
 		
-		//running each different classifier, population HashMap to store each precision value
-		for(int i = 0; i < classifiers.length; i++) {
-			String toTest = classifiers[i];
-			precisionVals.put(toTest, predict(instancesTrain, instancesTest, toTest, indicesToRemove, classAttribute, outputDir));
-		}
+		//run all the different classifiers
+		Double [] precisions = predict(instancesTrain, instancesTest, classifiers, indicesToRemove, classAttribute, predictionFile);
 		
-		for(HashMap.Entry <String, Double> entry : precisionVals.entrySet()) {
+		//writing precision values to a csv
+				File output = new File(precisionFile);
+				PrintWriter pw = new PrintWriter(output);
+		        StringBuilder sb = new StringBuilder();
+		        sb.append("Algorithm");
+		        sb.append(',');
+		        sb.append("Precision");
+		        sb.append("\n");
+		        
+		//find best algorithm and write to file
+		for(int i = 0; i < classifiers.length; i++) {
+			System.out.println("Algorithm: " + classifiers[i] + ", Precision: " + precisions[i] + '\n');
+			sb.append(classifiers[i] + ",");
+			sb.append(precisions[i]);
 			
-			if(entry.getValue() > maxPrecision) {
-				maxPrecision = entry.getValue();
-				bestMethod = entry.getKey();
+			if(i != classifiers.length - 1) {
+				sb.append("\n");
+			}
+			if(precisions[i] > maxPrecision) {
+				maxPrecision = precisions[i];
+				bestMethod = classifiers[i];
+			}
+		}
+		System.out.println("Best Algorithm: " + bestMethod + " with precision: " + maxPrecision);
+        
+		pw.write(sb.toString());
+        pw.close();
+	}
+	
+	public static boolean validArff(String file) {
+		//string must contain and end in .arff to be a valid arff file
+		return (file.contains(".arff") && file.indexOf(".arff") == file.length() - 5);
+	}
+	
+	public static boolean validCsv(String file) {
+		return (file.contains(".csv") && file.indexOf(".csv") == file.length() - 4);
+	}
+	
+	public static boolean fileExists(String file) {
+		File newFile = new File(file);
+		return newFile.exists();
+	}
+	
+	public static String setOutputDirectory() {
+		String dirName = "";
+		boolean isValid = false;
+		while(!isValid) {
+			dirName = sc.next();
+			File dir = new File(dirName);
+			
+			if(dir.exists() && (dirName.charAt(dirName.length()-1) == '/')) {
+				isValid = true;
+			}
+			else {
+				System.out.println("Sorry that was an invalid directory. Please try again.");
 			}
 		}
 		
-		System.out.println("Best Method: " + bestMethod + ", Precision: " + maxPrecision);
+		return dirName;
 	}
-		
-	//simple method to read ARFF file
+	
+	public static String setFileName(String fileType, String outputDir) {
+		String outputFile = "";
+		boolean isValid = false;
+		while(!isValid) {
+			outputFile = outputDir + sc.next();	
+			if(fileType.equals(".arff")) {
+				if(validArff(outputFile) == isValid) {
+					System.out.println("Sorry, the file you entered does not end in '.arff'. Please try again.");
+					continue;
+				}
+			}
+			if(fileType.equals(".csv")) {
+				if(validCsv(outputFile) == isValid) {
+					System.out.println("Sorry, the file you entered does not end in '.csv'. Please try again.");
+					continue;
+				}
+			}
+			if(fileExists(outputFile)) {
+				System.out.println("This file already exists in this directory. Do you want to overwrite it? (Y/n)?");
+				String answer = sc.next();
+				if(answer.equals("Y") || answer.equals("y")) {
+					isValid = true;
+				}
+				else if(answer.equals("N") || answer.equals("n")){
+					System.out.println("Please enter another name.");
+				}
+				else {
+					System.out.println("Could not understand input. Please enter a name again.");
+				}
+			}
+			else {
+				isValid = true;
+			}
+		}
+		return outputFile;
+	}
+	
 	public static Instances fileReader(String input) throws IOException {
 
 		File inputFile = new File(input);
@@ -100,17 +262,14 @@ public class Driver {
 		return data;
 		
 	}
-	
-	//returns the indices of the attributes that will be ignored by the classifier
+
 	public static String removeAttribute(Instances data, String [] attributes) throws Exception{
 		
-		//-R is the remove option
 		String [] options = new String[2];
 		options[0] = "-R";
 		
 		String indices = "";
 		
-		//indexing in WEKA starts at 1 not 0
 		for(int i = 0; i < attributes.length; i++) {
 			int index = (data.attribute(attributes[i])).index() + 1;
 			indices += index;
@@ -122,8 +281,8 @@ public class Driver {
 		return indices;
 	}
 	
-	public static Double predict(Instances train, Instances test, String classifierName, 
-		String indicesToRemove, String classAttribute, String outputDir) throws Exception {
+	public static Double [] predict(Instances train, Instances test, String [] classifierNames, 
+		String indicesToRemove, String classAttribute, String outputFile) throws Exception {
 		
 		//set the Class (what we want to predict)
 		test.setClass(test.attribute(classAttribute));
@@ -131,25 +290,34 @@ public class Driver {
 		//setting the train class index to be the same as the testing class index
 		train.setClassIndex(test.classIndex());
 		
-		double numInst = test.numInstances(), correct = 0.0f;
+		//going to make an array of classifiers
+		Classifier [] classifiers = new Classifier [classifierNames.length];
 		
-		//creating a classifier based on just the name
-		Classifier m_classifier = AbstractClassifier.forName(classifierName, null);
+		//need somewhere to store the precision of each classifier + initializing the array
+		Double precision [] = new Double [classifiers.length];
+		for(int i = 0; i < precision.length; i++) {
+			precision[i] = 0.0;
+		}
 		
-		//removing the attributes we don't want classifier to know about
+		//removing attributes we don't want to include such as das and barcode 
 		Remove rm = new Remove();
 		rm.setAttributeIndices(indicesToRemove);
 		
-		//making a filtered version of classifier
-		FilteredClassifier fc = new FilteredClassifier();
-		fc.setFilter(rm);
-		fc.setClassifier(m_classifier);
+		//creating filtered versions of each classifier (removing das and barcode)
+		for(int i = 0; i < classifiers.length; i++) {
+			Classifier temp = AbstractClassifier.forName(classifierNames[i], null);
+			
+			FilteredClassifier fc = new FilteredClassifier();
+			fc.setFilter(rm);
+			fc.setClassifier(temp);
+			
+			classifiers[i] = fc;
+		}
 		
-		//building the model
-		fc.buildClassifier(train);
-		
-		
-		String outputFile = outputDir + classifierName + "Predicted.csv";
+		//building the models for each classifier
+		for(int i = 0; i < classifiers.length; i++) {
+			classifiers[i].buildClassifier(train);
+		}
 		
 		//writing the header to the output csv
 		File output = new File(outputFile);
@@ -161,20 +329,39 @@ public class Driver {
         sb.append(",");
         sb.append("Actual");
         sb.append(',');
-        sb.append("Predicted");
-        sb.append('\n');
+        
+        //making the names of the classifiers part of the header, will indicate the stage that classifier has predicted for a particular plant
+        for(int i = 0; i < classifierNames.length; i++) {
+        	sb.append(classifierNames[i]);
+        	if(i != classifierNames.length - 1) {
+        		sb.append(",");
+        	}
+        }
+        sb.append("\n");
 		
-		for(int i = 0; i < numInst; i++){
+        double numInst = test.numInstances();
+        
+        //actually running the classifier
+    	for(int i = 0; i < numInst; i++){
+    		
+    		Instance current = test.instance(i);
 			
-			Instance current = test.instance(i);
-			
+    		//will set the Stage of this 'temp' instance to be the predicted value to then compare it to the actual value of 'current'
 			Instance temp = (Instance)current.copy();
 			
 			//attributes are given as array positions, getting the string value
 			String actualVal = current.stringValue(test.classIndex());
-			
+    		
+    		sb.append((int) current.value(test.attribute("barcode")));
+			sb.append(',');
+			sb.append((int) current.value(test.attribute("das")));
+			sb.append(",");
+			sb.append(actualVal);
+			sb.append(',');
+    		
+	       for(int j = 0; j < classifiers.length; j++) {
 			//getting the predicted value of the class attribute of this instance
-			double predicted = fc.classifyInstance(test.instance(i));
+			double predicted = classifiers[j].classifyInstance(test.instance(i));
 			
 			//setting this value to the temp class attribute
 			temp.setValue(test.classIndex(), predicted);
@@ -182,92 +369,42 @@ public class Driver {
 			//getting the string value
 			String predictedVal = temp.stringValue(temp.classIndex());
 			
-			sb.append((int) current.value(test.attribute("barcode")));
-			sb.append(',');
-			sb.append((int) current.value(test.attribute("das")));
-			sb.append(",");
-			sb.append(actualVal);
-			sb.append(',');
-			sb.append(predictedVal);
-			sb.append('\n');
-			
-			
+			//comparing predicted with actual value
 			if(predictedVal.equals(actualVal)) {
-		
-				correct++;
+				precision[j]++;
 			}
-		}
+			
+			sb.append(predictedVal);
+			
+			if(j != classifiers.length - 1) {
+				sb.append(",");
+			}
+			
+			else if( j == classifiers.length - 1) {
+				sb.append('\n');
+			}
+				
+		   }
+    	}
+    	
+    	for(int i = 0; i < precision.length; i++) {
+    		precision[i] = 100*precision[i]/numInst;
+    	}
 		
 		sb.append('\n');
 		pw.write(sb.toString());
         pw.close();
         
-        Double precision = 100*correct/numInst;
-        
         return precision;
 	}
-	
-	//still don't know if this is necessary
-	public static Instances [] attributeSelector(Instances train, Instances test, String evaluator) throws Exception {
 		
-		AttributeSelection selector = new AttributeSelection();
+	private static void connectToDatabase(String usrDB, String passwordDB, String conDB, String trainName, String testName) throws SQLException, FileNotFoundException {
 		
-		if (evaluator.equals("cfs")) {
-			CfsSubsetEval eval = new CfsSubsetEval();
-			BestFirst search = new BestFirst();
-			selector.setEvaluator(eval);
-			selector.setSearch(search);
-		}
-		else if(evaluator.equals("corr")) {
-			CorrelationAttributeEval eval = new CorrelationAttributeEval();
-	        Ranker search = new Ranker();
-	        selector.setEvaluator(eval);
-			selector.setSearch(search);
-		}
-		else if(evaluator.equals("oner")) {
-			OneRAttributeEval eval = new OneRAttributeEval();
-	        Ranker search = new Ranker();
-	        selector.setEvaluator(eval);
-			selector.setSearch(search);
-		}
-		/*need to fix this
-		 * else if(evaluator.equals("principal")) {
-			PrincipalComponents eval = new PrincipalComponents();
-	        Ranker search = new Ranker();
-	        selector.setEvaluator(eval);
-			selector.setSearch(search);
-		}*/
-		else if(evaluator.equals("relief")) {
-			ReliefFAttributeEval eval = new ReliefFAttributeEval();
-	        Ranker search = new Ranker();
-	        selector.setEvaluator(eval);
-			selector.setSearch(search);
-		}
-		
-        
-		selector.SelectAttributes(train);
-		
-		//rankedAttributes gives the ranking of the attributes along with their weights
-		//selected Attributes just gives the order of the ranking
-
-		
-		Instances trainTemp = selector.reduceDimensionality(train);
-		Instances trainTest = selector.reduceDimensionality(test);
-		
-		
-		Instances [] reduced = {trainTemp, trainTest};
-
-		return reduced;
-	}
-	
-	//method to connect to database, write training and testing data queries, write the results of query to different ARFF files to be read later
-	private static void connectToDatabase(String usrDB, String passwordDB, String conDB, String trainingFile, String testingFile) throws SQLException, FileNotFoundException {
-		
-		File trainingOutput = new File(trainingFile);
+		File trainingOutput = new File(trainName);
 		PrintWriter trainingPw = new PrintWriter(trainingOutput);
         StringBuilder sb = new StringBuilder();
         
-        File testingOutput = new File(testingFile);
+        File testingOutput = new File(testName);
         PrintWriter testingPw = new PrintWriter(testingOutput);
         
         sb.append("@relation databasetraining" + "\n" +  "\n" + "@attribute barcode numeric"  + "\n" + "@attribute area numeric" + "\n" + "@attribute perimeter numeric" + "\n" + 
@@ -430,8 +567,7 @@ public class Driver {
 
 			System.out.println("Improper database connection set-up.");
 			e.printStackTrace();
-			return;
 
 		}
-	}	
+	}
 }
