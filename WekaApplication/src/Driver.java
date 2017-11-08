@@ -74,7 +74,7 @@ public class Driver {
 				sc.nextLine();
 				//String dbPwd = args[3];
 			try {
-				connectToDatabase(dbUsr, dbPwd, dbConfig, trainingFile, testingFile);
+				connectToDatabase(dbUsr, dbPwd, dbConfig, testingFile, trainingFile);
 				
 				successfulConnection = true;
 			}catch (PSQLException s){
@@ -468,7 +468,7 @@ public class Driver {
 	    			+ "AND ( s.line = 1 OR s.line = 2 OR s.line = 3 ) "
 	    			+ "AND i.camera = 'vis-side-1-0' "
 	    			+ "AND i.set = '2' "
-	    			+ "AND d.das < 40 UNION "
+	    			+ "UNION "
 	    			+ "SELECT s.barcode, o.area, o.perimeter, o.circularity, "
 	    			+ "o.compactness, o.major, o.minor, o.eccentricity, o.hisgreypeak, "
 	    			+ "o.q1grey, o.q2grey, o.q3grey, "
@@ -490,8 +490,7 @@ public class Driver {
 	    			+ "AND i.set = d.set "
 	    			+ "AND (s.line = 2 OR s.line = 3 ) "
 	    			+ "AND i.camera = 'vis-side-1-0' "
-	    			+ "AND i.set = '3' "
-	    			+ "AND d.das < 40";
+	    			+ "AND i.set = '3' ";
 	    	
 	    	PreparedStatement trainingPs = conn.prepareStatement(trainingSql);
 			ResultSet trainingSet = trainingPs.executeQuery();
