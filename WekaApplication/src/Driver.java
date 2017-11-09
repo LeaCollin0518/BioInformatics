@@ -48,8 +48,8 @@ public class Driver {
 		System.out.println("Please enter the directory name of where you would like to store all program outputs:");
 		
 		//add control to check for valid directory
-		String outputDir = setOutputDirectory();
-		//String outputDir = args[1];
+		//String outputDir = setOutputDirectory();
+		String outputDir = args[1];
 		
 		
 		System.out.println();
@@ -429,11 +429,11 @@ public class Driver {
 	    			+ "o.q1r, o.q2r, o.q3r, "
 	    			+ "o.q1g, o.q2g, o.q3g, "
 	    			+ "o.q1b, o.q2b, o.q3b, d.das, "
-	    			+ "CASE WHEN ( d.das <= 17 ) THEN 'Stage 1' "
-	    			+ "WHEN ( d.das > 18 AND d.das <= 25 ) THEN 'Stage 2' "
-	    			+ "WHEN ( d.das > 25 AND d.das <= 32 ) THEN 'Stage 3' "
-	    			+ "WHEN ( d.das > 32 AND d.das <= 39 ) THEN 'Stage 4' "
-	    			+ "WHEN ( d.das > 39 AND d.das <= 46 ) THEN 'Stage 5' "
+	    			+ "CASE WHEN ( d.das <= 10 ) THEN 'Stage 1' "
+	    			+ "WHEN ( d.das > 10 AND d.das <= 20 ) THEN 'Stage 2' "
+	    			+ "WHEN ( d.das > 20 AND d.das <= 30 ) THEN 'Stage 3' "
+	    			+ "WHEN ( d.das > 30 AND d.das <= 40 ) THEN 'Stage 4' "
+	    			+ "WHEN ( d.das > 40 AND d.das <= 50 ) THEN 'Stage 5' "
 	    			+ "ELSE 'Stage 6' END Stage "
 	    			+ "FROM imageev AS i, imgobjectev AS o, soyidentification AS s, dasplusev AS d "
 	    			+ "WHERE i.assayid = o.assayid "
@@ -452,11 +452,11 @@ public class Driver {
 	    			+ "o.q1r, o.q2r, o.q3r, "
 	    			+ "o.q1g, o.q2g, o.q3g, "
 	    			+ "o.q1b, o.q2b, o.q3b, d.das, "
-	    			+ "CASE WHEN ( d.das <= 17 ) THEN 'Stage 1' "
-	    			+ "WHEN ( d.das > 18 AND d.das <= 25 ) THEN 'Stage 2' "
-	    			+ "WHEN ( d.das > 25 AND d.das <= 32 ) THEN 'Stage 3' "
-	    			+ "WHEN ( d.das > 32 AND d.das <= 39 ) THEN 'Stage 4' "
-	    			+ "WHEN ( d.das > 39 AND d.das <= 46 ) THEN 'Stage 5' "
+	    			+ "CASE WHEN ( d.das <= 10 ) THEN 'Stage 1' "
+	    			+ "WHEN ( d.das > 10 AND d.das <= 20 ) THEN 'Stage 2' "
+	    			+ "WHEN ( d.das > 20 AND d.das <= 30 ) THEN 'Stage 3' "
+	    			+ "WHEN ( d.das > 30 AND d.das <= 40 ) THEN 'Stage 4' "
+	    			+ "WHEN ( d.das > 40 AND d.das <= 50 ) THEN 'Stage 5' "
 	    			+ "ELSE 'Stage 6' END Stage "
 	    			+ "FROM imageev AS i, imgobjectev AS o, soyidentification AS s, dasplusev AS d "
 	    			+ "WHERE i.assayid = o.assayid "
@@ -475,11 +475,11 @@ public class Driver {
 	    			+ "o.q1r, o.q2r, o.q3r,"
 	    			+ " o.q1g, o.q2g, o.q3g, "
 	    			+ "o.q1b, o.q2b, o.q3b, d.das, "
-	    			+ "CASE WHEN ( d.das <= 17 ) THEN 'Stage 1' "
-	    			+ "WHEN ( d.das > 18 AND d.das <= 25 ) THEN 'Stage 2' "
-	    			+ "WHEN ( d.das > 25 AND d.das <= 32 ) THEN 'Stage 3' "
-	    			+ "WHEN ( d.das > 32 AND d.das <= 39 ) THEN 'Stage 4' "
-	    			+ "WHEN ( d.das > 39 AND d.das <= 46 ) THEN 'Stage 5' "
+	    			+ "CASE WHEN ( d.das <= 10 ) THEN 'Stage 1' "
+	    			+ "WHEN ( d.das > 10 AND d.das <= 20 ) THEN 'Stage 2' "
+	    			+ "WHEN ( d.das > 20 AND d.das <= 30 ) THEN 'Stage 3' "
+	    			+ "WHEN ( d.das > 30 AND d.das <= 40 ) THEN 'Stage 4' "
+	    			+ "WHEN ( d.das > 40 AND d.das <= 50 ) THEN 'Stage 5' "
 	    			+ "ELSE 'Stage 6' END Stage "
 	    			+ "FROM imageev AS i, imgobjectev AS o, soyidentification AS s, dasplusev AS d "
 	    			+ "WHERE i.assayid = o.assayid "
