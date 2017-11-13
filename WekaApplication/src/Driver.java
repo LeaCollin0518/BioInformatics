@@ -8,6 +8,7 @@ import weka.classifiers.AbstractClassifier;
 import weka.classifiers.meta.FilteredClassifier;
 import weka.core.converters.ArffLoader;
 import weka.filters.unsupervised.attribute.Remove;
+import weka.attributeSelection.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -82,6 +83,24 @@ public class Driver {
 			}
 		}
 		
+		boolean rankAttributes = false;
+		
+		boolean isValid = false;
+		while(!isValid) {
+			System.out.println("Would you like to rank the attributes? (Y/n), (Could lead to better results)");
+			String answer = sc.next();
+			if(answer.equals("Y") || answer.equals("y")) {
+				isValid = true;
+				rankAttributes = true;
+			}
+			else if(answer.equals("N") || answer.equals("n")){
+				isValid = true;
+				rankAttributes = false;
+			}
+			else {
+				System.out.println("Could not understand input. Please enter a name again. \n");
+			}
+		}
 		
 		//getting user input for classifier names, checking if input is valid
 		String [] classifiers = null;
@@ -152,7 +171,7 @@ public class Driver {
 		String bestMethod = "";
 		
 		//run all the different classifiers
-		Double [] precisions = predict(instancesTrain, instancesTest, classifiers, indicesToRemove, classAttribute, predictionFile);
+		Double [] precisions = predict(instancesTrain, instancesTest, classifiers, indicesToRemove, classAttribute, predictionFile, rankAttributes);
 		
 		//writing precision values to a csv
 				File output = new File(precisionFile);
@@ -282,7 +301,20 @@ public class Driver {
 	}
 	
 	public static Double [] predict(Instances train, Instances test, String [] classifierNames, 
-		String indicesToRemove, String classAttribute, String outputFile) throws Exception {
+		String indicesToRemove, String classAttribute, String outputFile, boolean rankAttributes) throws Exception {
+		
+		//removing attributes we don't want to include such as das and barcode 
+				Remove rm = new Remove();
+				rm.setAttributeIndices(indicesToRemove);
+		
+		//running an attribute selector if one was given
+				if(rankAttributes) {
+					Instances [] reduced = attributeSelector(train, test);
+					
+					train = reduced[0];
+					
+					test = reduced[1];
+				}
 		
 		//set the Class (what we want to predict)
 		test.setClass(test.attribute(classAttribute));
@@ -298,10 +330,6 @@ public class Driver {
 		for(int i = 0; i < precision.length; i++) {
 			precision[i] = 0.0;
 		}
-		
-		//removing attributes we don't want to include such as das and barcode 
-		Remove rm = new Remove();
-		rm.setAttributeIndices(indicesToRemove);
 		
 		//creating filtered versions of each classifier (removing das and barcode)
 		for(int i = 0; i < classifiers.length; i++) {
@@ -569,4 +597,25 @@ public class Driver {
 
 		}
 	}
+	
+public static Instances [] attributeSelector(Instances train, Instances test) throws Exception {
+		
+		AttributeSelection selector = new AttributeSelection();
+		Ranker search = new Ranker();
+		OneRAttributeEval eval = new OneRAttributeEval();
+		selector.setEvaluator(eval);
+		selector.setSearch(search);
+		selector.SelectAttributes(train);
+		
+		//rankedAttributes gives the ranking of the attributes along with their weights
+		//selected Attributes just gives the order of the ranking
+		Instances trainTemp = selector.reduceDimensionality(train);
+		Instances trainTest = selector.reduceDimensionality(test);
+		
+		
+		Instances [] reduced = {trainTemp, trainTest};
+
+		return reduced;
+	}
+	
 }
