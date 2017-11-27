@@ -23,11 +23,11 @@ public class Driver {
 	static Scanner sc = new Scanner(System.in);
 	
 	public static void main(String [] args) throws Exception {
-
+		
+		//private database information
 		String dbConfig = args[0];
 		
 		//ArrayList will contain all the possible algorithms that the user can input
-		//needs to be expanded on still probably
 		ArrayList<String> possibleClassifiers = new ArrayList<String>();
 		possibleClassifiers.add("ZeroR");
 		possibleClassifiers.add("NaiveBayes");
@@ -44,14 +44,10 @@ public class Driver {
 		possibleClassifiers.add("RandomTree");
 		possibleClassifiers.add("REPTree");
 		
-			
-		System.out.println("A BUNCH OF DIRECTIONS");
 		System.out.println("Please enter the directory name of where you would like to store all program outputs:");
 		
 		//add control to check for valid directory
-		//String outputDir = setOutputDirectory();
-		String outputDir = args[1];
-		
+		String outputDir = setOutputDirectory();
 		
 		System.out.println();
 		System.out.println("Please enter the name of the file you'd like to store the TRAINING data. Please end the file name in '.arff'");
@@ -61,19 +57,16 @@ public class Driver {
 		
 		System.out.println("Please enter the name of the file you'd like to store the TESTING data. Please end the file name in '.arff'");
 		String testingFile = setFileName(".arff", outputDir);
-		//String testingFile = outputDir + "testingData.arff";
 		System.out.println();
 		
-		//trying to connect to database given username and password, user prompted to enter username and password again if connection is unsuccessful
+		//try to connect to database given username and password, user prompted to enter username and password again if connection is unsuccessful
 		boolean successfulConnection = false;
 		while(!successfulConnection) {
 				System.out.println("Please enter your database username:");
 				String dbUsr = sc.next();
-				//String dbUsr = args[2];
 				System.out.println("Password:");
 				String dbPwd = sc.next();
 				sc.nextLine();
-				//String dbPwd = args[3];
 			try {
 				connectToDatabase(dbUsr, dbPwd, dbConfig, testingFile, trainingFile);
 				
@@ -84,7 +77,6 @@ public class Driver {
 		}
 		
 		boolean rankAttributes = false;
-		
 		boolean isValid = false;
 		while(!isValid) {
 			System.out.println("Would you like to rank the attributes? (Y/n), (Could lead to better results)");
@@ -143,13 +135,11 @@ public class Driver {
 		System.out.println();
 		System.out.println("Please enter the name of the file you would like to store all of the predictions. Please end the file in '.csv'");
 		String predictionFile = setFileName(".csv", outputDir);
-		//String predictionFile = outputDir + "prediction.csv";
 		
 		System.out.println();
 		System.out.println("Finally, please enter the name of the file you would like to store the precision of each algorithm you are testing. "
 				+ "Please end the file in '.csv'");
 		String precisionFile = setFileName(".csv", outputDir);
-		//String precisionFile = outputDir + "precision.csv";
 		System.out.println();
 		
 		sc.close();
@@ -184,18 +174,12 @@ public class Driver {
 		        
 		//find best algorithm and write to file
 		for(int i = 0; i < classifiers.length; i++) {
-			System.out.println("Algorithm: " + classifiers[i] + ", Precision: " + precisions[i] + '\n');
-			sb.append(classifiers[i] + ",");
-			sb.append(precisions[i]);
-			
-			if(i != classifiers.length - 1) {
-				sb.append("\n");
-			}
 			if(precisions[i] > maxPrecision) {
 				maxPrecision = precisions[i];
 				bestMethod = classifiers[i];
 			}
 		}
+		//simply printing out for the user which algorithm was best and its precision
 		System.out.println("Best Algorithm: " + bestMethod + " with precision: " + maxPrecision);
         
 		pw.write(sb.toString());
@@ -289,6 +273,7 @@ public class Driver {
 		
 		String indices = "";
 		
+		//getting all the indices of attributes we want to later remove (or ignore)
 		for(int i = 0; i < attributes.length; i++) {
 			int index = (data.attribute(attributes[i])).index() + 1;
 			indices += index;
@@ -307,7 +292,7 @@ public class Driver {
 				Remove rm = new Remove();
 				rm.setAttributeIndices(indicesToRemove);
 		
-		//running an attribute selector if one was given
+		//running an attribute selector if user chose to rank attributes
 				if(rankAttributes) {
 					Instances [] reduced = attributeSelector(train, test);
 					
@@ -435,6 +420,7 @@ public class Driver {
         File testingOutput = new File(testName);
         PrintWriter testingPw = new PrintWriter(testingOutput);
         
+        //creating the header for the arff file
         sb.append("@relation databasetraining" + "\n" +  "\n" + "@attribute barcode numeric"  + "\n" + "@attribute area numeric" + "\n" + "@attribute perimeter numeric" + "\n" + 
         "@attribute circularity numeric" + "\n" + "@attribute compactness numeric" + "\n" + "@attribute major numeric" + "\n" + 
         "@attribute minor numeric" + "\n" + "@attribute eccentricity numeric" + "\n" + "@attribute hisgreypeak numeric" + "\n" + 
@@ -547,6 +533,7 @@ public class Driver {
 				Double das = trainingSet.getDouble("das");
 				String stage = trainingSet.getString("Stage");
 				
+				//writing all the different attributes from the query to the output arff file
 				trainingPw.write(barcode + "," + area + ", " + perimeter + ", " + circularity + ", " + compactness + ", " + major + ", " + minor + ", " + eccentricity
 						+ ", " + hisgreypeak + ", " + q1grey + ", " + q2grey + ", " + q3grey + ", " + q1r + ", " + q2r + ", " + q3r
 						+ ", " + q1g + ", " + q2g + ", " + q3g + ", " + q1b + ", " + q2b + ", " + q3b + "," + das + "," + "'" + stage + "'" + "\n");
